@@ -1,53 +1,146 @@
 @import 'tailwindcss';
 
-/* Identidade do site. Definida uma vez aqui e usada por classe utilitária no
-   resto do projeto — trocar a cor da marca é mexer neste bloco, não caçar
-   hexadecimal espalhado por trinta arquivos. */
-@theme {
-  /* Grafite: cabeçalho, rodapé e texto. Não é preto puro — preto puro sobre
-     branco cansa a vista em tela de celular no sol. */
-  --color-grafite-50: #f6f6f7;
-  --color-grafite-100: #e2e3e6;
-  --color-grafite-200: #c5c7cc;
-  --color-grafite-300: #9a9da5;
-  --color-grafite-400: #6f737d;
-  --color-grafite-500: #4e525b;
-  --color-grafite-600: #3a3d45;
-  --color-grafite-700: #2b2e34;
-  --color-grafite-800: #1d1f24;
-  --color-grafite-900: #131418;
+/* ───────────────────────────────────────────────────────────────────────────
+   Identidade: "placar de autódromo".
 
-  /* Âmbar: preço, chamada para ação, destaque. Cor quente puxa o olho pro
-     número, que é o que o comprador procura primeiro. */
-  --color-ambar-50: #fff8ed;
-  --color-ambar-100: #ffefd4;
+   Fundo escuro por decisão, não por moda. Três motivos:
+   1. Foto de carro brilha no escuro — o fundo some e o produto aparece.
+   2. Todo classificado de carro é branco e azul. Este não é.
+   3. "Selecionado" é a posição do Jair contra o anúncio solto de rede social,
+      e escuro com âmbar lê como seleção, não como feirão.
+
+   Número é sempre monoespaçado com largura fixa de dígito: preço, km, ano,
+   valor de lucro. Numa coluna de valores, dígito de largura variável faz a
+   vírgula dançar de linha em linha, e a tabela fica difícil de conferir.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Grafite — a estrutura */
+  --color-grafite-50: #f7f7f8;
+  --color-grafite-100: #e8e9ec;
+  --color-grafite-200: #cbcdd4;
+  --color-grafite-300: #a0a4ae;
+  --color-grafite-400: #747986;
+  --color-grafite-500: #545967;
+  --color-grafite-600: #3d414d;
+  --color-grafite-700: #2c2f39;
+  --color-grafite-800: #1c1e26;
+  --color-grafite-900: #121319;
+  --color-grafite-950: #0b0c10;
+
+  /* Âmbar — dinheiro e ação. Só aparece onde há preço ou botão. Espalhado,
+     deixa de sinalizar e vira decoração. */
   --color-ambar-200: #ffdba8;
   --color-ambar-300: #ffc071;
-  --color-ambar-400: #ff9c38;
-  --color-ambar-500: #f97e12;
-  --color-ambar-600: #ea6207;
-  --color-ambar-700: #c24908;
-  --color-ambar-800: #9a3a0f;
-  --color-ambar-900: #7c3210;
+  --color-ambar-400: #ffa53d;
+  --color-ambar-500: #f9840f;
+  --color-ambar-600: #e06806;
+  --color-ambar-700: #b84f08;
 
-  /* Verde do WhatsApp. Usado SÓ no botão de WhatsApp — em qualquer outro lugar
-     ele deixa de sinalizar "conversa" e vira ruído. */
+  /* Verde: só selo de documentação em dia e botão de WhatsApp. */
+  --color-conferido: #4ade80;
   --color-zap: #25d366;
   --color-zap-escuro: #1da851;
+
+  --font-display: var(--fonte-titulo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--fonte-titulo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--fonte-numero), ui-monospace, monospace;
 }
 
 html {
   scroll-behavior: smooth;
+  background: var(--color-grafite-950);
 }
 
 body {
-  background: var(--color-grafite-50);
-  color: var(--color-grafite-800);
+  background: var(--color-grafite-950);
+  color: var(--color-grafite-100);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Esconde a seta do input numérico: no formulário de valores ela convida ao
-   clique errado e o Jair cadastra o carro pelo celular. */
+/* Grão sobre o fundo. Superfície escura chapada num celular OLED mostra faixas
+   de banda no degradê; o ruído quebra isso e dá textura de impressão. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23r)'/%3E%3C/svg%3E");
+}
+
+/* ── Utilitários de composição ───────────────────────────────────────────── */
+
+/* Etiqueta miúda em caixa alta: "CÂMBIO", "ANO", "LUCRO DO MÊS". É o que dá o
+   ar de ficha técnica. */
+.etiqueta {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-grafite-400);
+}
+
+/* Número de ficha: largura de dígito fixa. */
+.numero {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Brilho âmbar difuso atrás do topo da página. */
+.brilho-ambar {
+  background:
+    radial-gradient(60rem 30rem at 50% -12rem, rgba(249, 132, 15, 0.16), transparent 70%),
+    radial-gradient(40rem 24rem at 88% -6rem, rgba(249, 132, 15, 0.07), transparent 65%);
+}
+
+/* Entrada escalonada da grade de carros. O atraso é aplicado por índice no
+   componente, então a página se monta de cima pra baixo em vez de piscar
+   inteira. */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.surgir {
+  animation: surgir 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Quem pediu menos movimento no sistema não recebe nenhum. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .surgir {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Foco visível de verdade. O anel padrão some no fundo escuro, e quem navega
+   por teclado fica sem saber onde está. */
+:focus-visible {
+  outline: 2px solid var(--color-ambar-400);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* A seta do input numérico convida ao clique errado — e o Jair cadastra carro
+   pelo celular, com o dedo. */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -55,4 +148,22 @@ input[type='number']::-webkit-inner-spin-button {
 }
 input[type='number'] {
   -moz-appearance: textfield;
+}
+
+/* Barra de rolagem combinando com o resto. */
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-grafite-900);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-grafite-600);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-grafite-500);
+  }
 }

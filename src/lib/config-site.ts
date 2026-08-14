@@ -7,7 +7,19 @@
 //   - Instagram
 //   - cidade de atuação
 
-export const SITE = {
+type ConfiguracaoSite = {
+  nome: string
+  descricao: string
+  whatsapp: string
+  /** Vazio esconde o item no rodapé — o Jair ainda vai informar. */
+  instagram: string
+  telefone: string
+  cidade: string
+  estado: string
+  url: string
+}
+
+export const SITE: ConfiguracaoSite = {
   nome: 'Jair Junior Veículos',
   descricao:
     'Carros usados e seminovos selecionados, com procedência verificada. Fale direto com o vendedor pelo WhatsApp.',
@@ -24,7 +36,7 @@ export const SITE = {
 
   /** Endereço público do site. Em produção vem do ambiente. */
   url: process.env.NEXT_PUBLIC_URL_SITE ?? 'http://localhost:3000',
-} as const
+}
 
 /** Link do WhatsApp com a mensagem já escrita.
  *
