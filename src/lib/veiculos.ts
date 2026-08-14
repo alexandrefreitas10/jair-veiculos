@@ -1,5 +1,6 @@
 import sql, { initSchema } from '@/lib/db'
 import { gerarSlug } from '@/lib/slug'
+import { dataBrasilia, normalizarData } from '@/lib/periodo'
 import type { Cambio, Carroceria, Combustivel, Estado, Origem } from '@/lib/veiculos-tipos'
 
 // Camada PRIVADA do veículo: enxerga tudo, inclusive quanto o Jair pagou e de
@@ -180,7 +181,7 @@ export async function criarVeiculo(dados: DadosVeiculo): Promise<number> {
       ${dados.consignanteNome ?? null}, ${dados.consignanteContato ?? null},
       ${dados.comissaoTipo ?? null}, ${dados.comissaoPercentualBps ?? null},
       ${dados.comissaoFixaCentavos ?? null},
-      ${(dados.dataEntrada as string | Date | undefined) ?? new Date()},
+      ${dados.dataEntrada ? normalizarData(dados.dataEntrada) : dataBrasilia()},
       ${dados.observacoesInternas ?? null},
       ${dados.estado ?? 'rascunho'}
     )
