@@ -1,0 +1,73 @@
+services:
+  - type: web
+    name: jair-veiculos
+    runtime: node
+    # Começa no free, como combinado. Duas consequências que precisam ser ditas
+    # antes de o Jair divulgar o link:
+    #
+    # 1. O serviço HIBERNA depois de ~15 minutos sem visita. A primeira pessoa a
+    #    abrir depois disso espera ~30 segundos numa tela branca. Num site de
+    #    venda isso é caro: o comprador clica o link do WhatsApp, não abre, e ele
+    #    some. Quando começarem a chegar contatos de verdade, trocar para
+    #    `plan: starter` (US$ 7/mês) resolve — é a mudança de uma linha.
+    #
+    # 2. O Postgres free do Render EXPIRA em 90 dias e é apagado. Não é aviso
+    #    genérico: já aconteceu no outro projeto. Anote a data de criação.
+    plan: free
+
+    # `npm ci` instala exatamente o que está no package-lock.json. Não trocar por
+    # `npm install`: next-auth está em versão beta e uma resolução nova trocaria
+    # a biblioteca de autenticação sem ninguém pedir.
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # ATENÇÃO: com NODE_ENV=production o npm pula as devDependencies. Por isso
+      # tailwind, typescript e os @types estão em `dependencies` no package.json,
+      # e não em `devDependencies` — se voltarem pra lá, o build quebra aqui.
+
+      - key: AUTH_SECRET
+        generateValue: true
+
+      # Sem isto o next-auth v5 recusa o login atrás do proxy do Render, com um
+      # erro de host não confiável que não explica nada.
+      - key: AUTH_TRUST_HOST
+        value: true
+
+      # Preenchido À MÃO no painel (Environment), com a URL INTERNA do banco.
+      # Não usar `fromDatabase`: aquilo monta a string com a senha que o próprio
+      # Render guarda, e aí não dá pra rotacionar a credencial — um ALTER USER no
+      # banco não chega até aqui e o serviço para de conectar no restart seguinte.
+      - key: DATABASE_URL
+        sync: false
+
+      # Endereço público do site. Entra no preview de link e no sitemap — se
+      # ficar errado, o cartão que aparece no WhatsApp aponta pro lugar errado.
+      - key: NEXT_PUBLIC_URL_SITE
+        sync: false
+
+      # "local" grava foto no disco do container, que É APAGADO A CADA DEPLOY.
+      # Em produção tem que ser "r2".
+      - key: ARMAZENAMENTO
+        value: r2
+
+      # Credenciais da Cloudflare R2, preenchidas no painel.
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_URL_PUBLICA
+        sync: false
+
+databases:
+  - name: jair-veiculos-db
+    plan: free
+    databaseName: jairveiculos
+    user: jairveiculos

@@ -202,16 +202,29 @@ export async function buscarVeiculoPorSlug(slug: string): Promise<Veiculo | null
   return linha ? paraVeiculo(linha) : null
 }
 
-/** Lista para o painel: mostra TODOS os estados, inclusive rascunho e vendido. */
-export async function listarVeiculos(filtros: { estado?: Estado } = {}): Promise<Veiculo[]> {
+/** Veículo com a chave da foto de capa — o que a listagem do painel precisa. */
+export type VeiculoNaLista = Veiculo & { fotoCapa: string | null }
+
+/** Lista para o painel: mostra TODOS os estados, inclusive rascunho e vendido.
+ *
+ *  A capa vem por subconsulta em vez de uma busca por carro: com o estoque
+ *  inteiro na tela, uma consulta por linha seria uma ida ao banco por carro. */
+export async function listarVeiculos(filtros: { estado?: Estado } = {}): Promise<VeiculoNaLista[]> {
   await initSchema()
+
+  const capa = sql`
+    (SELECT f.chave_miniatura FROM veiculo_fotos f
+      WHERE f.veiculo_id = v.id ORDER BY f.capa DESC, f.ordem ASC, f.id ASC LIMIT 1) AS foto_capa
+  `
+
   const linhas = filtros.estado
     ? await sql<LinhaVeiculo[]>`
-        SELECT * FROM veiculos WHERE estado = ${filtros.estado}
-        ORDER BY criado_em DESC
+        SELECT v.*, ${capa} FROM veiculos v WHERE v.estado = ${filtros.estado}
+        ORDER BY v.criado_em DESC
       `
-    : await sql<LinhaVeiculo[]>`SELECT * FROM veiculos ORDER BY criado_em DESC`
-  return linhas.map(paraVeiculo)
+    : await sql<LinhaVeiculo[]>`SELECT v.*, ${capa} FROM veiculos v ORDER BY v.criado_em DESC`
+
+  return linhas.map((l) => ({ ...paraVeiculo(l), fotoCapa: (l.foto_capa as string) ?? null }))
 }
 
 /** Mapa de campo do TypeScript para coluna do banco. Só o que pode ser

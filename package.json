@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "test": "node --env-file-if-exists=.env.test.local --env-file-if-exists=.env.local node_modules/jest/bin/jest.js --runInBand",
-    "criar-usuario": "node --env-file-if-exists=.env.local scripts/criar-usuario.mjs"
+    "criar-usuario": "node --env-file-if-exists=.env.local scripts/criar-usuario.mjs",
+    "dados-demo": "node --env-file-if-exists=.env.local scripts/dados-demo.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",

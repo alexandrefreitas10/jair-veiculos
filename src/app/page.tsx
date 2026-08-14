@@ -23,11 +23,17 @@ const FAIXAS = [
 ]
 
 export default async function Home() {
-  const [destaques, recentes, total] = await Promise.all([
+  const [destaques, todos, total] = await Promise.all([
     listarDestaques(6),
-    listarVitrine({ limite: 8 }),
+    listarVitrine({ limite: 12 }),
     totalNaVitrine(),
   ])
+
+  // Tira da segunda seção o que já apareceu nos destaques. Com estoque de dez
+  // carros, sem isto quase todo cartão aparece duas vezes na mesma rolagem — e
+  // a página passa a impressão de ter menos variedade do que tem.
+  const idsEmDestaque = new Set(destaques.map((d) => d.id))
+  const recentes = todos.filter((c) => !idsEmDestaque.has(c.id))
 
   return (
     <>
@@ -93,20 +99,25 @@ export default async function Home() {
           </Secao>
         )}
 
-        <Secao
-          titulo={destaques.length > 0 ? 'Chegaram agora' : 'Estoque'}
-          descricao={destaques.length > 0 ? undefined : 'Todos os carros disponíveis no momento.'}
-          verTudo={total > recentes.length}
-        >
-          {recentes.length > 0 ? (
+        {/* Só aparece se sobrou algo além dos destaques. */}
+        {recentes.length > 0 && (
+          <Secao
+            titulo={destaques.length > 0 ? 'Também no estoque' : 'Estoque'}
+            descricao={destaques.length > 0 ? undefined : 'Todos os carros disponíveis no momento.'}
+            verTudo={total > destaques.length + recentes.length}
+          >
             <Grade carros={recentes} />
-          ) : (
+          </Secao>
+        )}
+
+        {total === 0 && (
+          <section className="mx-auto max-w-6xl px-5 py-14">
             <div className="rounded-xl border border-dashed border-grafite-700 px-6 py-16 text-center">
               <p className="text-grafite-300">Nenhum carro publicado ainda.</p>
               <p className="mt-1 text-sm text-grafite-500">Volte em breve — o estoque gira rápido.</p>
             </div>
-          )}
-        </Secao>
+          </section>
+        )}
       </main>
 
       <Rodape />
