@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+
+/* Identidade do site. Definida uma vez aqui e usada por classe utilitária no
+   resto do projeto — trocar a cor da marca é mexer neste bloco, não caçar
+   hexadecimal espalhado por trinta arquivos. */
+@theme {
+  /* Grafite: cabeçalho, rodapé e texto. Não é preto puro — preto puro sobre
+     branco cansa a vista em tela de celular no sol. */
+  --color-grafite-50: #f6f6f7;
+  --color-grafite-100: #e2e3e6;
+  --color-grafite-200: #c5c7cc;
+  --color-grafite-300: #9a9da5;
+  --color-grafite-400: #6f737d;
+  --color-grafite-500: #4e525b;
+  --color-grafite-600: #3a3d45;
+  --color-grafite-700: #2b2e34;
+  --color-grafite-800: #1d1f24;
+  --color-grafite-900: #131418;
+
+  /* Âmbar: preço, chamada para ação, destaque. Cor quente puxa o olho pro
+     número, que é o que o comprador procura primeiro. */
+  --color-ambar-50: #fff8ed;
+  --color-ambar-100: #ffefd4;
+  --color-ambar-200: #ffdba8;
+  --color-ambar-300: #ffc071;
+  --color-ambar-400: #ff9c38;
+  --color-ambar-500: #f97e12;
+  --color-ambar-600: #ea6207;
+  --color-ambar-700: #c24908;
+  --color-ambar-800: #9a3a0f;
+  --color-ambar-900: #7c3210;
+
+  /* Verde do WhatsApp. Usado SÓ no botão de WhatsApp — em qualquer outro lugar
+     ele deixa de sinalizar "conversa" e vira ruído. */
+  --color-zap: #25d366;
+  --color-zap-escuro: #1da851;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-grafite-50);
+  color: var(--color-grafite-800);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Esconde a seta do input numérico: no formulário de valores ela convida ao
+   clique errado e o Jair cadastra o carro pelo celular. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}

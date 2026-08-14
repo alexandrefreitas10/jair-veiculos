@@ -1,0 +1,19 @@
+# dependências
+/node_modules
+
+# build
+/.next
+/out
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# segredos — nunca no git
+.env*.local
+
+# fotos gravadas pelo driver de armazenamento local (dev)
+/.uploads
+
+# sistema
+.DS_Store
+*.pem
+npm-debug.log*
