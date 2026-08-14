@@ -1,11 +1,5 @@
 // Tudo que depende de uma informação do Jair mora aqui. Um arquivo só, para
 // trocar sem caçar texto espalhado pelo projeto.
-//
-// PENDÊNCIAS DELE (valores provisórios abaixo):
-//   - nome do negócio
-//   - número do WhatsApp
-//   - Instagram
-//   - cidade de atuação
 
 type ConfiguracaoSite = {
   nome: string
@@ -24,15 +18,19 @@ export const SITE: ConfiguracaoSite = {
   descricao:
     'Carros usados e seminovos selecionados, com procedência verificada. Fale direto com o vendedor pelo WhatsApp.',
 
-  /** Só dígitos, com DDI e DDD: 55 + DDD + número. */
-  whatsapp: '5511999999999',
+  /** Só dígitos, com DDI e DDD: 55 + 62 (Goiânia) + 98192-8080.
+   *  O link do WhatsApp não aceita traço nem parêntese. */
+  whatsapp: '5562981928080',
 
-  /** Vazio esconde o item no rodapé. */
-  instagram: '',
+  instagram: '@jairpiresjr85',
+
+  /** Vazio de propósito: o telefone dele é o mesmo do WhatsApp, e repetir o
+   *  número duas vezes no rodapé parece erro. Preencher só se um dia houver
+   *  uma linha fixa ou comercial diferente. */
   telefone: '',
 
-  cidade: 'São Paulo',
-  estado: 'SP',
+  cidade: 'Goiânia',
+  estado: 'GO',
 
   /** Endereço público do site. Em produção vem do ambiente. */
   url: process.env.NEXT_PUBLIC_URL_SITE ?? 'http://localhost:3000',

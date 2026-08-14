@@ -59,11 +59,11 @@ Os testes preferem `.env.test.local` a `.env.local`, então o banco de teste é 
    npm run criar-usuario -- "Jair Junior" email@dele.com "senha-forte"
    ```
 
-### Três coisas que vão morder se forem esquecidas
+### O que vai morder se for esquecido
 
-- **O plano free hiberna.** Depois de ~15 min sem visita, a primeira pessoa espera ~30 s numa tela branca. Num site de venda isso custa cliente: ele clica o link do WhatsApp, não abre, e some. `plan: starter` resolve.
-- **O Postgres free do Render expira em 90 dias** e é apagado. Anote a data.
-- **`ARMAZENAMENTO` precisa ser `r2` em produção.** No modo `local` as fotos vão pro disco do container, que é apagado a cada deploy.
+**`ARMAZENAMENTO` precisa ser `r2` em produção.** No modo `local` as fotos vão pro disco do container, que é apagado a cada deploy — o site fica com os anúncios sem imagem e ninguém percebe até um cliente reclamar.
+
+Os planos já estão pagos no `render.yaml` (`starter` no web, `basic-256mb` no banco), de propósito: o free hiberna e o Postgres gratuito expira em 90 dias.
 
 ## O que fica configurável
 

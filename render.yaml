@@ -2,18 +2,11 @@ services:
   - type: web
     name: jair-veiculos
     runtime: node
-    # Começa no free, como combinado. Duas consequências que precisam ser ditas
-    # antes de o Jair divulgar o link:
-    #
-    # 1. O serviço HIBERNA depois de ~15 minutos sem visita. A primeira pessoa a
-    #    abrir depois disso espera ~30 segundos numa tela branca. Num site de
-    #    venda isso é caro: o comprador clica o link do WhatsApp, não abre, e ele
-    #    some. Quando começarem a chegar contatos de verdade, trocar para
-    #    `plan: starter` (US$ 7/mês) resolve — é a mudança de uma linha.
-    #
-    # 2. O Postgres free do Render EXPIRA em 90 dias e é apagado. Não é aviso
-    #    genérico: já aconteceu no outro projeto. Anote a data de criação.
-    plan: free
+    # Pago desde o começo, não free. Num site de venda a hibernação do plano
+    # gratuito é cara do jeito errado: o comprador clica o link que o Jair
+    # mandou no WhatsApp, espera ~30 segundos numa tela branca e desiste — e o
+    # Jair nunca fica sabendo que perdeu o contato.
+    plan: starter
 
     # `npm ci` instala exatamente o que está no package-lock.json. Não trocar por
     # `npm install`: next-auth está em versão beta e uma resolução nova trocaria
@@ -67,7 +60,10 @@ services:
         sync: false
 
 databases:
+  # Basic, não free. O Postgres gratuito do Render expira em 90 dias e é
+  # APAGADO — já aconteceu no Run Coach. Aqui isso levaria junto o estoque e o
+  # histórico financeiro inteiro do Jair.
   - name: jair-veiculos-db
-    plan: free
+    plan: basic-256mb
     databaseName: jairveiculos
     user: jairveiculos
