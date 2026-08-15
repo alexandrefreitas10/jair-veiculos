@@ -143,6 +143,13 @@ Você deve ter cinco coisas anotadas:
 
 7. **Deploy Blueprint**.
 
+> 🛑 **O deploy vai terminar e o site vai dar erro 500. Isso é esperado.**
+>
+> Você deixou `DATABASE_URL` em branco de propósito — o banco não existia
+> ainda. Enquanto ela estiver vazia, `/` e `/carros` respondem 500 e o log diz
+> `ECONNREFUSED 127.0.0.1:5432`, que parece problema de rede mas não é.
+> A próxima seção resolve. **Não pule.**
+
 ### 2.1 Ligar o banco (é aqui que costuma dar errado)
 
 O banco só existe depois que o Blueprint roda. Então:

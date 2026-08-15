@@ -20,9 +20,34 @@ function aoReceberAviso(aviso: { code?: string; message?: string }) {
 const opcoes = { ssl, max: 10, onnotice: aoReceberAviso }
 const sql = url ? postgres(url, opcoes) : postgres(opcoes)
 
+/**
+ * Recusa subir em produção sem DATABASE_URL, com mensagem que diz o que fazer.
+ *
+ * Sem esta checagem o sintoma é cruel: a biblioteca `postgres`, chamada sem
+ * URL, assume o padrão dela — `localhost:5432`. Em produção isso vira
+ * `ECONNREFUSED 127.0.0.1:5432` no log, que parece problema de rede ou de
+ * banco caído e manda quem está diagnosticando procurar no lugar errado. A
+ * verdade é banal: a variável não foi preenchida.
+ *
+ * Aconteceu de verdade no primeiro deploy deste projeto, em 15/08/2026.
+ *
+ * A ausência de URL continua permitida FORA de produção, porque os testes que
+ * não tocam o banco precisam poder importar este módulo.
+ */
+export function conferirConfiguracao(url: string, ambiente: string | undefined): void {
+  if (url || ambiente !== 'production') return
+  throw new Error(
+    'DATABASE_URL não está configurada.\n' +
+      'O app tentaria conectar em localhost:5432 e falharia com ECONNREFUSED.\n' +
+      'No Render: abra o banco, copie a Internal Database URL (a que NÃO tem\n' +
+      '".oregon-postgres" no meio) e cole em Environment → DATABASE_URL.',
+  )
+}
+
 // Memoiza a migração: roda UMA vez por processo. Em falha, limpa o cache p/ retry.
 let schemaPronto: Promise<void> | null = null
 export function initSchema(): Promise<void> {
+  conferirConfiguracao(url, process.env.NODE_ENV)
   if (!schemaPronto) {
     schemaPronto = migrar().catch((err) => {
       schemaPronto = null
