@@ -97,6 +97,21 @@ function lerFormulario(f: FormData) {
 
 // ── Veículo ─────────────────────────────────────────────────────────────────
 
+/** As despesas do passo 2 chegam como JSON num campo escondido: a tabela é
+ *  dinâmica e o servidor precisa recebê-la inteira. JSON inválido vira lista
+ *  vazia — perder uma despesa é ruim, mas derrubar o cadastro inteiro do carro
+ *  por causa dela é pior. */
+function lerDespesas(f: FormData): Array<{ descricao: string; categoria: string; valor: string }> {
+  const bruto = texto(f, 'despesas')
+  if (!bruto) return []
+  try {
+    const lista = JSON.parse(bruto)
+    return Array.isArray(lista) ? lista : []
+  } catch {
+    return []
+  }
+}
+
 export async function criarVeiculoAcao(_anterior: unknown, formulario: FormData) {
   await exigirSessao()
 
@@ -105,11 +120,41 @@ export async function criarVeiculoAcao(_anterior: unknown, formulario: FormData)
     return { erro: 'Marca e modelo são obrigatórios.' }
   }
 
-  // Nasce como rascunho, sempre. O Jair completa fotos e conferências antes de
-  // publicar — cadastro pela metade no ar afasta comprador.
-  const id = await criarVeiculo({ ...dados, estado: 'rascunho' })
+  // "Já no site" só vale se o botão de publicar foi usado; "Salvar rascunho"
+  // sempre guarda como rascunho, mesmo com o segmentado marcado — o botão que
+  // ele clicou diz mais sobre a intenção do que o campo que ficou marcado.
+  const querPublicar = texto(formulario, 'publicar') === 'site' && !formulario.get('rascunho')
+
+  // O preço vem do preço sugerido do aside (custo × margem alvo) quando ele não
+  // digitou um preço próprio.
+  const precoSugerido = inteiro(formulario, 'precoSugerido')
+  const preco = dados.precoCentavos > 0 ? dados.precoCentavos : (precoSugerido ?? 0)
+
+  const id = await criarVeiculo({ ...dados, precoCentavos: preco, estado: 'rascunho' })
+
+  // As despesas entram depois do veículo, na mesma requisição. Se alguma falhar
+  // o cadastro continua de pé — e ele relança pelo livro, que é uma tela feita
+  // pra isso.
+  for (const d of lerDespesas(formulario)) {
+    const valorCentavos = paraCentavos(d.valor)
+    if (valorCentavos === null || valorCentavos === 0) continue
+    const categoria = (CATEGORIAS_CUSTO as readonly string[]).includes(d.categoria)
+      ? (d.categoria as CategoriaCusto)
+      : 'outros'
+    await lancarCusto({
+      veiculoId: id,
+      categoria,
+      valorCentavos,
+      descricao: d.descricao?.trim() || null,
+      data: dados.dataEntrada,
+    })
+  }
+
+  if (querPublicar) await mudarEstado(id, 'disponivel')
 
   revalidatePath('/admin/veiculos')
+  revalidatePath('/admin')
+  revalidatePath('/')
   redirect(`/admin/veiculos/${id}?novo=1`)
 }
 

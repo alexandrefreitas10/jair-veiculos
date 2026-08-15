@@ -1,7 +1,6 @@
 'use client'
 
-import { useActionState, useRef, useEffect } from 'react'
-import { ENTRADA } from './campos'
+import { useActionState, useEffect, useRef } from 'react'
 import { CATEGORIAS_CUSTO, ROTULO_CATEGORIA_CUSTO } from '@/lib/veiculos-tipos'
 
 type Resultado = { erro: string | null; salvoEm?: number }
@@ -13,7 +12,7 @@ export function LancarCusto({ veiculoId, acao }: { veiculoId: number; acao: Acao
   const [estado, enviar, enviando] = useActionState(acao, INICIAL)
   const formulario = useRef<HTMLFormElement>(null)
 
-  // Limpa depois de lançar. Ele costuma lançar três ou quatro custos seguidos
+  // Limpa depois de lançar. Ele costuma lançar três ou quatro gastos seguidos
   // (funilaria, pneu, documentação), e reaproveitar o valor anterior faria ele
   // repetir um número sem perceber.
   useEffect(() => {
@@ -21,41 +20,52 @@ export function LancarCusto({ veiculoId, acao }: { veiculoId: number; acao: Acao
   }, [estado.salvoEm, estado.erro])
 
   return (
-    <form ref={formulario} action={enviar} className="grid gap-3 sm:grid-cols-[10rem_1fr_9rem_auto]">
+    <form ref={formulario} action={enviar}>
       <input type="hidden" name="veiculoId" value={veiculoId} />
 
-      <select name="categoria" defaultValue="mecanica" className={ENTRADA} aria-label="Categoria">
-        {CATEGORIAS_CUSTO.filter((c) => c !== 'compra').map((c) => (
-          <option key={c} value={c}>
-            {ROTULO_CATEGORIA_CUSTO[c]}
-          </option>
-        ))}
-      </select>
+      <div className="flex gap-2">
+        <div className="field flex-1">
+          <label htmlFor="descricao-custo">Novo lançamento</label>
+          <input
+            id="descricao-custo"
+            name="descricao"
+            className="input"
+            placeholder="ex. troca de pneus"
+          />
+        </div>
+        <div className="field w-[110px]">
+          <label htmlFor="valor-custo">Valor</label>
+          <input
+            id="valor-custo"
+            name="valor"
+            inputMode="decimal"
+            required
+            className="input jj-num"
+            placeholder="0,00"
+          />
+        </div>
+      </div>
 
-      <input name="descricao" placeholder="Descrição (opcional)" className={ENTRADA} aria-label="Descrição" />
-
-      <input
-        name="valor"
-        inputMode="decimal"
-        placeholder="0,00"
-        required
-        className={`${ENTRADA} numero`}
-        aria-label="Valor"
-      />
-
-      <button
-        type="submit"
-        disabled={enviando}
-        className="rounded-lg bg-grafite-100 px-4 py-2.5 font-medium text-grafite-950 transition hover:bg-white disabled:opacity-60"
-      >
-        {enviando ? '…' : 'Lançar'}
-      </button>
+      <div className="field mt-2">
+        <label htmlFor="categoria-custo">Categoria</label>
+        <select id="categoria-custo" name="categoria" defaultValue="mecanica" className="input">
+          {CATEGORIAS_CUSTO.filter((c) => c !== 'compra').map((c) => (
+            <option key={c} value={c}>
+              {ROTULO_CATEGORIA_CUSTO[c]}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {estado.erro && (
-        <p role="alert" className="text-sm text-red-300 sm:col-span-4">
+        <p role="alert" className="mt-2 mb-0 text-[13px] text-red-800">
           {estado.erro}
         </p>
       )}
+
+      <button type="submit" disabled={enviando} className="btn btn-primary btn-block">
+        {enviando ? 'Adicionando…' : 'Adicionar ao livro'}
+      </button>
     </form>
   )
 }

@@ -28,16 +28,16 @@ export default async function NovaVenda({
 
   return (
     <>
-      <nav className="mb-4 text-sm text-grafite-500">
-        <Link href="/admin/negocios" className="transition hover:text-grafite-300">
+      <nav className="mb-4 text-sm text-muted">
+        <Link href="/admin/negocios" className="transition hover:text-muted">
           Vendas
         </Link>
-        <span className="mx-2 text-grafite-700">/</span>
-        <span className="text-grafite-300">Nova</span>
+        <span className="mx-2 text-muted">/</span>
+        <span className="text-muted">Nova</span>
       </nav>
 
-      <h1 className="font-display text-2xl font-bold tracking-tight text-grafite-50">Registrar venda</h1>
-      <p className="mt-1.5 max-w-2xl text-sm text-grafite-400">
+      <h1 className="titulo-pagina">Registrar venda</h1>
+      <p className="mt-1.5 max-w-2xl text-sm text-muted">
         Ao registrar, o carro sai do site e o lucro entra no painel. Se entrou carro na troca, ele é
         cadastrado no estoque na mesma hora.
       </p>

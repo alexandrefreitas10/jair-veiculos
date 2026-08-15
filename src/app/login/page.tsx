@@ -18,21 +18,24 @@ export default async function PaginaLogin({
   const { voltar } = await searchParams
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-grafite-900 px-5 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-grafite-50">
-            {SITE.nome}
+    <main className="flex min-h-dvh flex-col items-center justify-center px-4 py-8">
+      <div className="w-full max-w-[380px]">
+        <div className="mb-6 text-center">
+          <Link
+            href="/"
+            className="font-heading text-[20px] font-semibold tracking-[-0.012em] text-text no-underline"
+          >
+            {SITE.nome.replace(' Veículos', '')} <span className="text-accent">Veículos</span>
           </Link>
-          <p className="mt-2 text-sm text-grafite-400">Painel do vendedor</p>
+          <p className="kicker mt-2">Painel do vendedor</p>
         </div>
 
-        <div className="rounded-2xl border border-grafite-700 bg-grafite-800 p-6 shadow-2xl">
+        <div className="card">
           <FormularioLogin voltar={voltar ?? '/admin'} />
         </div>
 
-        <p className="mt-6 text-center text-sm text-grafite-500">
-          <Link href="/" className="transition hover:text-grafite-300">
+        <p className="mt-4 text-center text-[13px]">
+          <Link href="/" className="text-muted no-underline hover:text-accent">
             ← Voltar para o site
           </Link>
         </p>

@@ -9,13 +9,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-// O painel nunca é estático: cada tela depende do estoque e das vendas de
-// agora. Sem isto, o Next pré-renderizaria as telas sem dado de sessão.
+// O painel nunca é estático: cada tela depende do estoque e das vendas de agora.
 export const dynamic = 'force-dynamic'
 
+// Nav interna do handoff.
 const LINKS = [
-  { href: '/admin', rotulo: 'Painel' },
-  { href: '/admin/veiculos', rotulo: 'Veículos' },
+  { href: '/admin/veiculos', rotulo: 'Estoque' },
+  { href: '/admin', rotulo: 'Financeiro' },
   { href: '/admin/negocios', rotulo: 'Vendas' },
   { href: '/admin/relatorios', rotulo: 'Relatórios' },
 ]
@@ -32,53 +32,48 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-40 border-b border-grafite-800 bg-grafite-950/90 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-5">
-          <div className="flex h-16 items-center justify-between gap-4">
-            <div className="flex items-baseline gap-3">
-              <Link href="/admin" className="font-display font-black tracking-tight text-grafite-50">
-                {SITE.nome}
-              </Link>
-              <span className="etiqueta hidden sm:inline">painel</span>
-            </div>
+      <header className="sticky top-0 z-40 border-b border-[var(--color-divider)] bg-bg/95 backdrop-blur">
+        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-4 px-4 py-3">
+          <Link
+            href="/admin"
+            className="font-heading text-[18px] font-semibold tracking-[-0.012em] text-text no-underline"
+          >
+            {SITE.nome.replace(' Veículos', '')} <span className="text-accent">Veículos</span>
+          </Link>
 
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                target="_blank"
-                className="hidden text-sm text-grafite-400 transition hover:text-ambar-400 sm:inline"
-              >
-                Ver o site ↗
-              </Link>
-              <span className="hidden text-sm text-grafite-500 md:inline">{usuario.nome}</span>
-              <form action={sair}>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-grafite-700 px-3 py-1.5 text-sm text-grafite-300 transition hover:border-grafite-600 hover:text-grafite-100"
-                >
-                  Sair
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Rolagem horizontal no celular: quatro abas não cabem em tela de
-              360px sem espremer o toque. */}
-          <nav className="-mb-px flex gap-1 overflow-x-auto">
+          {/* Rolagem horizontal no celular: quatro abas não cabem em 360px sem
+              espremer o alvo de toque. */}
+          <nav className="chips flex-1 items-center gap-4">
             {LINKS.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
-                className="whitespace-nowrap border-b-2 border-transparent px-3 py-3 text-sm font-medium text-grafite-400 transition hover:border-grafite-600 hover:text-grafite-100"
+                className="text-[14px] whitespace-nowrap text-text no-underline hover:text-accent"
               >
                 {l.rotulo}
               </Link>
             ))}
           </nav>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              target="_blank"
+              className="hidden text-[13px] text-muted no-underline hover:text-accent sm:inline"
+            >
+              Ver o site ↗
+            </Link>
+            <span className="hidden text-[13px] text-muted md:inline">{usuario.nome}</span>
+            <form action={sair}>
+              <button type="submit" className="btn btn-secondary">
+                Sair
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-5 py-8">{children}</main>
+      <main className="mx-auto max-w-[1180px] px-4 py-8">{children}</main>
     </div>
   )
 }

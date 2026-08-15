@@ -1,12 +1,13 @@
-// Peças de formulário do painel. Ficam juntas num arquivo só porque mudam
-// juntas: alterar a altura de toque ou a cor de foco precisa valer para todos
-// os campos ao mesmo tempo, senão o formulário fica desalinhado.
+// Peças de formulário do painel.
 //
-// A altura mínima de 44px não é estética: é o alvo de toque confortável no
-// celular, e o Jair cadastra carro em pé, na rua, com o dedo.
+// Agora são só apelidos para as classes do design system (`.input`, `.card`),
+// definidas em globals.css. Antes cada campo carregava uma pilha de utilitárias
+// repetidas; com o sistema portado, a classe já traz borda, foco e altura.
+//
+// `ENTRADA` continua existindo como constante porque dezenas de campos a usam,
+// e um apelido é mais fácil de trocar do que uma busca-e-substitui.
 
-export const ENTRADA =
-  'w-full rounded-lg border border-grafite-700 bg-grafite-950 px-3.5 py-2.5 text-grafite-100 placeholder:text-grafite-600 outline-none transition focus:border-ambar-500 min-h-[44px]'
+export const ENTRADA = 'input'
 
 export function Campo({
   rotulo,
@@ -20,10 +21,10 @@ export function Campo({
   className?: string
 }) {
   return (
-    <label className={`block ${className}`}>
-      <span className="etiqueta mb-1.5 block">{rotulo}</span>
+    <label className={`field block ${className}`}>
+      <span>{rotulo}</span>
       {children}
-      {dica && <span className="mt-1 block text-xs text-grafite-500">{dica}</span>}
+      {dica && <span className="mt-1 block text-[11px] text-muted">{dica}</span>}
     </label>
   )
 }
@@ -38,10 +39,10 @@ export function Bloco({
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-grafite-800 bg-grafite-900 p-5">
-      <h2 className="font-display font-semibold text-grafite-50">{titulo}</h2>
-      {descricao && <p className="mt-1 text-sm text-grafite-400">{descricao}</p>}
-      <div className="mt-5">{children}</div>
+    <section className="card">
+      <h2 className="card-title m-0">{titulo}</h2>
+      {descricao && <p className="m-0 text-[13px] text-muted">{descricao}</p>}
+      <div className="mt-2">{children}</div>
     </section>
   )
 }
@@ -56,14 +57,40 @@ export function Interruptor({
   padrao?: boolean
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-grafite-700 bg-grafite-950 px-3.5 py-3 transition hover:border-grafite-600">
+    // min-h-[44px]: alvo de toque confortável. O Jair cadastra carro em pé, na
+    // rua, com o dedo.
+    <label className="flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-[var(--radius-md)] border border-[var(--color-divider)] px-3 py-2 hover:bg-[color-mix(in_srgb,var(--color-text)_5%,transparent)]">
       <input
         type="checkbox"
         name={nome}
         defaultChecked={padrao}
-        className="h-4 w-4 shrink-0 accent-ambar-500"
+        className="h-4 w-4 shrink-0 accent-[var(--color-accent)]"
       />
-      <span className="text-sm text-grafite-200">{rotulo}</span>
+      <span className="text-[13px]">{rotulo}</span>
     </label>
+  )
+}
+
+/** Segmentado do design system, para uso dentro de formulários com `name`. */
+export function Segmentado({
+  nome,
+  opcoes,
+  padrao,
+  className = '',
+}: {
+  nome: string
+  opcoes: Array<{ valor: string; rotulo: string }>
+  padrao?: string
+  className?: string
+}) {
+  return (
+    <div className={`seg ${className}`} role="group">
+      {opcoes.map((o) => (
+        <label key={o.valor} className="seg-opt">
+          <input type="radio" name={nome} value={o.valor} defaultChecked={padrao === o.valor} />
+          {o.rotulo}
+        </label>
+      ))}
+    </div>
   )
 }

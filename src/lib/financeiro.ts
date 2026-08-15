@@ -277,6 +277,121 @@ export async function carrosParados(limite = 5): Promise<CarroParado[]> {
   }))
 }
 
+export type LinhaLivro = {
+  veiculoId: number
+  marca: string
+  modelo: string
+  versao: string | null
+  anoFabricacao: number
+  anoModelo: number
+  finalPlaca: string | null
+  origem: Origem
+  estado: string
+  dataEntrada: string
+  compraCentavos: number | null
+  despesasCentavos: number
+  custoCentavos: number
+  /** `null` enquanto não vendeu — na tabela vira travessão, não zero. */
+  vendaCentavos: number | null
+  lucroCentavos: number | null
+  /** Percentual do lucro sobre o custo. */
+  lucroPercentual: number | null
+  /** Dias entre a entrada e a venda; se não vendeu, até hoje. */
+  dias: number
+  vendido: boolean
+}
+
+/**
+ * O livro do pátio: um veículo por linha, com o dinheiro todo.
+ *
+ * `custo = compra + despesas` e `lucro = venda − custo`, exatamente como o
+ * handoff especifica. Para consignado o lucro sai da comissão — a conta mora em
+ * `calcularLucro` e não é reescrita aqui, senão passariam a existir duas
+ * definições de lucro no sistema e uma delas ficaria para trás em silêncio.
+ */
+export async function livroDoPatio(): Promise<LinhaLivro[]> {
+  await initSchema()
+  const hoje = dataBrasilia()
+
+  const linhas = await sql<
+    {
+      id: number
+      marca: string
+      modelo: string
+      versao: string | null
+      ano_fabricacao: number
+      ano_modelo: number
+      final_placa: string | null
+      origem: Origem
+      estado: string
+      data_entrada: Date | string
+      valor_compra_centavos: number | null
+      despesas: string
+      valor_venda_centavos: number | null
+      comissao_recebida_centavos: number | null
+      dias: number
+    }[]
+  >`
+    SELECT
+      v.id, v.marca, v.modelo, v.versao, v.ano_fabricacao, v.ano_modelo,
+      v.final_placa, v.origem, v.estado, v.data_entrada, v.valor_compra_centavos,
+      COALESCE((SELECT SUM(c.valor_centavos) FROM veiculo_custos c WHERE c.veiculo_id = v.id), 0)::text
+        AS despesas,
+      n.valor_venda_centavos, n.comissao_recebida_centavos,
+      (COALESCE(n.data, ${hoje}::date) - v.data_entrada) AS dias
+    FROM veiculos v
+    LEFT JOIN negocios n ON n.veiculo_id = v.id
+    WHERE v.estado <> 'arquivado'
+    ORDER BY v.data_entrada DESC, v.id DESC
+  `
+
+  return linhas.map((l) => {
+    const despesas = Number(l.despesas)
+    const vendido = l.valor_venda_centavos !== null
+
+    const calculo = calcularLucro({
+      origem: l.origem,
+      valorCompraCentavos: l.valor_compra_centavos,
+      custosCentavos: [despesas],
+      valorVendaCentavos: l.valor_venda_centavos ?? 0,
+      comissaoRecebidaCentavos: l.comissao_recebida_centavos,
+    })
+
+    return {
+      veiculoId: l.id,
+      marca: l.marca,
+      modelo: l.modelo,
+      versao: l.versao,
+      anoFabricacao: l.ano_fabricacao,
+      anoModelo: l.ano_modelo,
+      finalPlaca: l.final_placa,
+      origem: l.origem,
+      estado: l.estado,
+      dataEntrada:
+        typeof l.data_entrada === 'string'
+          ? l.data_entrada.slice(0, 10)
+          : l.data_entrada.toISOString().slice(0, 10),
+      compraCentavos: l.valor_compra_centavos,
+      despesasCentavos: despesas,
+      custoCentavos: calculo.custoTotal,
+      vendaCentavos: l.valor_venda_centavos,
+      lucroCentavos: vendido ? calculo.lucro : null,
+      lucroPercentual:
+        vendido && calculo.custoTotal > 0 ? (calculo.lucro / calculo.custoTotal) * 100 : null,
+      dias: l.dias,
+      vendido,
+    }
+  })
+}
+
+/** Acima de ~90 dias parado, o carro entra em revisão de preço.
+ *
+ *  Regra sugerida pelo handoff e útil de verdade: carro parado é dinheiro preso
+ *  que não vira outro negócio, e ainda desvaloriza sozinho com o tempo. */
+export function precisaRevisarPreco(linha: LinhaLivro): boolean {
+  return !linha.vendido && linha.dias > 90
+}
+
 /** CSV do relatório, para abrir no Excel.
  *
  *  Separador ponto e vírgula e BOM no começo: é o que faz o Excel em português

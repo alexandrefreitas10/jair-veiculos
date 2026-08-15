@@ -1,31 +1,38 @@
+/**
+ * Célula da faixa de indicadores do livro do pátio.
+ *
+ * A separação entre células é uma borda esquerda hairline, não um card por
+ * indicador — é o que o handoff pede e o que faz a faixa ler como uma régua de
+ * números, não como quatro caixas soltas. A primeira célula não tem borda.
+ */
 export function Cartao({
   etiqueta,
   valor,
-  detalhe,
+  nota,
   tom = 'neutro',
+  primeira = false,
 }: {
   etiqueta: string
   valor: string
-  detalhe?: string
-  tom?: 'neutro' | 'positivo' | 'negativo' | 'destaque'
+  nota?: string
+  tom?: 'neutro' | 'accent' | 'negativo'
+  primeira?: boolean
 }) {
-  // O lucro negativo precisa gritar. Um prejuízo em cinza, no meio de quatro
-  // cartões iguais, passa despercebido — e é justamente o número que deveria
-  // fazer o Jair parar e olhar.
+  // Prejuízo precisa gritar. Um número negativo em cinza, no meio de quatro
+  // indicadores iguais, passa despercebido — e é justamente o que deveria fazer
+  // o Jair parar e olhar.
   const cor =
-    tom === 'positivo'
-      ? 'text-conferido'
-      : tom === 'negativo'
-        ? 'text-red-400'
-        : tom === 'destaque'
-          ? 'text-ambar-400'
-          : 'text-grafite-50'
+    tom === 'accent' ? 'text-accent-700' : tom === 'negativo' ? 'text-red-700' : 'text-text'
 
   return (
-    <div className="rounded-xl border border-grafite-800 bg-grafite-900 p-5">
-      <p className="etiqueta">{etiqueta}</p>
-      <p className={`numero mt-2 text-2xl font-semibold ${cor}`}>{valor}</p>
-      {detalhe && <p className="mt-1 text-sm text-grafite-500">{detalhe}</p>}
+    <div className={primeira ? 'px-4 py-3' : 'border-l border-[var(--color-divider)] px-4 py-3'}>
+      <p className="m-0 text-[10px] tracking-[0.1em] text-muted uppercase">{etiqueta}</p>
+      <p
+        className={`jj-num m-0 mt-1 font-heading text-[27px] leading-none font-semibold tracking-[-0.02em] ${cor}`}
+      >
+        {valor}
+      </p>
+      {nota && <p className="m-0 mt-1 text-[11px] text-muted">{nota}</p>}
     </div>
   )
 }

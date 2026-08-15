@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { Cartao } from '@/components/admin/Cartao'
-import { formatarReais, formatarReaisCurto } from '@/lib/dinheiro'
-import { resumir, vendasNoPeriodo } from '@/lib/financeiro'
+import { GraficoMensal } from '@/components/admin/GraficoMensal'
+import { formatarReaisCurto } from '@/lib/dinheiro'
+import { resumir, serieMensal, vendasNoPeriodo } from '@/lib/financeiro'
 import { MESES, formatarData, mesAtualBrasilia, primeiroDiaDoMes, ultimoDiaDoMes } from '@/lib/periodo'
 import { ROTULO_ORIGEM } from '@/lib/veiculos-tipos'
 
@@ -26,54 +27,38 @@ export default async function Relatorios({
   const de = lerData(parametros.de) ?? primeiroDiaDoMes(ano, mes)
   const ate = lerData(parametros.ate) ?? ultimoDiaDoMes(ano, mes)
 
-  const vendas = await vendasNoPeriodo(de, ate)
+  const [vendas, serie] = await Promise.all([vendasNoPeriodo(de, ate), serieMensal(12)])
   const resumo = resumir(vendas)
 
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-grafite-50">Relatórios</h1>
-          <p className="mt-1 text-sm text-grafite-400">
+          <p className="kicker m-0">Relatórios</p>
+          <h1 className="titulo-pagina mt-2">
             {formatarData(de)} a {formatarData(ate)}
-          </p>
+          </h1>
         </div>
 
         {vendas.length > 0 && (
-          <a
-            href={`/admin/relatorios/csv?de=${de}&ate=${ate}`}
-            className="rounded-lg border border-grafite-700 px-4 py-2.5 text-sm font-medium text-grafite-200 transition hover:border-grafite-600"
-          >
+          <a href={`/admin/relatorios/csv?de=${de}&ate=${ate}`} className="btn btn-secondary">
             Baixar para Excel
           </a>
         )}
       </div>
 
-      {/* Formulário simples com GET: o período fica na URL, então ele pode
-          favoritar o fechamento de um mês e voltar nele depois. */}
-      <form method="get" className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-grafite-800 bg-grafite-900 p-4">
-        <label className="block">
-          <span className="etiqueta mb-1.5 block">De</span>
-          <input
-            type="date"
-            name="de"
-            defaultValue={de}
-            className="numero rounded-lg border border-grafite-700 bg-grafite-950 px-3 py-2 text-grafite-100 outline-none focus:border-ambar-500"
-          />
-        </label>
-        <label className="block">
-          <span className="etiqueta mb-1.5 block">Até</span>
-          <input
-            type="date"
-            name="ate"
-            defaultValue={ate}
-            className="numero rounded-lg border border-grafite-700 bg-grafite-950 px-3 py-2 text-grafite-100 outline-none focus:border-ambar-500"
-          />
-        </label>
-        <button
-          type="submit"
-          className="rounded-lg bg-grafite-100 px-4 py-2 font-medium text-grafite-950 transition hover:bg-white"
-        >
+      {/* GET simples: o período fica na URL, então ele pode favoritar o
+          fechamento de um mês e voltar nele depois. */}
+      <form method="get" className="card mt-5 !flex-row flex-wrap items-end gap-3">
+        <div className="field">
+          <label htmlFor="de">De</label>
+          <input id="de" type="date" name="de" defaultValue={de} className="input jj-num" />
+        </div>
+        <div className="field">
+          <label htmlFor="ate">Até</label>
+          <input id="ate" type="date" name="ate" defaultValue={ate} className="input jj-num" />
+        </div>
+        <button type="submit" className="btn btn-primary">
           Aplicar
         </button>
 
@@ -86,7 +71,7 @@ export default async function Relatorios({
               <Link
                 key={`${a}-${m}`}
                 href={`/admin/relatorios?de=${primeiroDiaDoMes(a, m)}&ate=${ultimoDiaDoMes(a, m)}`}
-                className="rounded-lg border border-grafite-700 px-3 py-2 text-sm text-grafite-300 transition hover:border-grafite-600"
+                className="btn btn-secondary"
               >
                 {MESES[m - 1]}
               </Link>
@@ -95,83 +80,91 @@ export default async function Relatorios({
         </div>
       </form>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] rounded-[var(--radius-md)] border border-[var(--color-divider)]">
         <Cartao
+          primeira
           etiqueta="Lucro do período"
-          valor={formatarReais(resumo.lucro)}
-          tom={resumo.lucro > 0 ? 'positivo' : resumo.lucro < 0 ? 'negativo' : 'neutro'}
+          valor={formatarReaisCurto(resumo.lucro)}
+          tom={resumo.lucro < 0 ? 'negativo' : 'accent'}
         />
         <Cartao etiqueta="Vendas" valor={String(resumo.vendas)} />
         <Cartao
           etiqueta="Sua receita"
           valor={formatarReaisCurto(resumo.receita)}
-          detalhe={`${formatarReaisCurto(resumo.volumeVendido)} movimentados`}
+          nota={`${formatarReaisCurto(resumo.volumeVendido)} movimentados`}
         />
         <Cartao
           etiqueta="Margem média"
           valor={resumo.margemMedia === null ? '—' : `${resumo.margemMedia.toFixed(1)}%`}
-          detalhe={resumo.lucroMedio === null ? undefined : `${formatarReaisCurto(resumo.lucroMedio)} por carro`}
+          nota={
+            resumo.lucroMedio === null ? undefined : `${formatarReaisCurto(resumo.lucroMedio)} por carro`
+          }
         />
       </div>
 
-      {vendas.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-dashed border-grafite-700 px-6 py-16 text-center">
-          <p className="text-grafite-200">Nenhuma venda neste período.</p>
+      <section className="card mt-6">
+        <div className="flex items-baseline justify-between">
+          <h2 className="card-title m-0">Lucro por mês</h2>
+          <span className="kicker">últimos 12 meses</span>
         </div>
+        <GraficoMensal dados={serie} />
+      </section>
+
+      {vendas.length === 0 ? (
+        <p className="py-8 text-center text-muted">Nenhuma venda neste período.</p>
       ) : (
-        <div className="mt-8 overflow-x-auto rounded-xl border border-grafite-800">
-          <table className="w-full min-w-3xl text-sm">
-            <thead className="bg-grafite-900">
+        <div className="mt-6 overflow-x-auto">
+          <table className="table">
+            <thead>
               <tr>
-                <Th>Data</Th>
-                <Th>Veículo</Th>
-                <Th>Origem</Th>
-                <Th direita>Compra</Th>
-                <Th direita>Custos</Th>
-                <Th direita>Venda</Th>
-                <Th direita>Lucro</Th>
-                <Th direita>Margem</Th>
-                <Th direita>Dias</Th>
+                <th>Data</th>
+                <th>Veículo</th>
+                <th>Origem</th>
+                <th className="text-right">Compra</th>
+                <th className="text-right">Custos</th>
+                <th className="text-right">Venda</th>
+                <th className="text-right">Lucro</th>
+                <th className="text-right">Margem</th>
+                <th className="text-right">Dias</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-grafite-800 bg-grafite-950/40">
+            <tbody>
               {vendas.map((v) => (
-                <tr key={v.negocioId} className="transition hover:bg-grafite-900/60">
-                  <td className="numero whitespace-nowrap px-4 py-3 text-grafite-400">{formatarData(v.data)}</td>
-                  <td className="px-4 py-3">
-                    <Link href={`/admin/veiculos/${v.veiculoId}`} className="transition hover:text-ambar-400">
+                <tr key={v.negocioId}>
+                  <td className="whitespace-nowrap">{formatarData(v.data)}</td>
+                  <td>
+                    <Link
+                      href={`/admin/veiculos/${v.veiculoId}`}
+                      className="text-text no-underline hover:text-accent"
+                    >
                       {v.marca} {v.modelo}
                     </Link>{' '}
-                    <span className="numero text-grafite-600">{v.anoModelo}</span>
+                    <span className="text-muted">{v.anoModelo}</span>
                   </td>
-                  <td className="px-4 py-3 text-grafite-400">{ROTULO_ORIGEM[v.origem]}</td>
-                  <td className="numero px-4 py-3 text-right text-grafite-400">
+                  <td className="text-muted">{ROTULO_ORIGEM[v.origem]}</td>
+                  <td className="text-right">
                     {v.origem === 'consignado' ? '—' : formatarReaisCurto(v.valorCompraCentavos)}
                   </td>
-                  <td className="numero px-4 py-3 text-right text-grafite-400">
-                    {formatarReaisCurto(v.custosCentavos)}
-                  </td>
-                  <td className="numero px-4 py-3 text-right text-grafite-200">
-                    {formatarReaisCurto(v.valorVendaCentavos)}
-                  </td>
-                  <td className={`numero px-4 py-3 text-right font-medium ${v.lucro >= 0 ? 'text-conferido' : 'text-red-400'}`}>
+                  <td className="text-right">{formatarReaisCurto(v.custosCentavos)}</td>
+                  <td className="text-right">{formatarReaisCurto(v.valorVendaCentavos)}</td>
+                  <td className={`text-right ${v.lucro < 0 ? 'text-red-700' : 'text-accent-700'}`}>
                     {formatarReaisCurto(v.lucro)}
                   </td>
-                  <td className="numero px-4 py-3 text-right text-grafite-400">
+                  <td className="text-right text-muted">
                     {v.margem === null ? '—' : `${v.margem.toFixed(0)}%`}
                   </td>
-                  <td className="numero px-4 py-3 text-right text-grafite-500">
-                    {v.diasEmEstoque ?? '—'}
-                  </td>
+                  <td className="text-right text-muted">{v.diasEmEstoque ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
-            <tfoot className="border-t-2 border-grafite-700 bg-grafite-900">
-              <tr>
-                <td colSpan={6} className="px-4 py-3 text-right font-medium text-grafite-300">
+            <tfoot>
+              <tr className="border-t-2 border-[var(--color-divider)]">
+                <td colSpan={6} className="text-right text-muted">
                   Total
                 </td>
-                <td className={`numero px-4 py-3 text-right font-semibold ${resumo.lucro >= 0 ? 'text-conferido' : 'text-red-400'}`}>
+                <td
+                  className={`text-right font-semibold ${resumo.lucro < 0 ? 'text-red-700' : 'text-accent-700'}`}
+                >
                   {formatarReaisCurto(resumo.lucro)}
                 </td>
                 <td colSpan={2} />
@@ -181,13 +174,5 @@ export default async function Relatorios({
         </div>
       )}
     </>
-  )
-}
-
-function Th({ children, direita }: { children: React.ReactNode; direita?: boolean }) {
-  return (
-    <th scope="col" className={`etiqueta whitespace-nowrap px-4 py-3 ${direita ? 'text-right' : 'text-left'}`}>
-      {children}
-    </th>
   )
 }

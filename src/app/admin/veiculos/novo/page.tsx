@@ -1,28 +1,29 @@
 import Link from 'next/link'
-import { FormularioVeiculo } from '@/components/admin/FormularioVeiculo'
+import { EntradaDeVeiculo } from '@/components/admin/EntradaDeVeiculo'
 import { criarVeiculoAcao } from '../acoes'
 
-export const metadata = { title: 'Novo veículo' }
+export const metadata = { title: 'Entrada de veículo' }
 
 export default function NovoVeiculo() {
   return (
     <>
-      <nav className="mb-4 text-sm text-grafite-500">
-        <Link href="/admin/veiculos" className="transition hover:text-grafite-300">
-          Veículos
+      <nav className="mb-3 text-[13px] text-muted">
+        <Link href="/admin/veiculos" className="text-muted no-underline hover:text-accent">
+          Estoque
         </Link>
-        <span className="mx-2 text-grafite-700">/</span>
-        <span className="text-grafite-300">Novo</span>
+        <span className="mx-2">/</span>
+        <span>Entrada de veículo</span>
       </nav>
 
-      <h1 className="font-display text-2xl font-bold tracking-tight text-grafite-50">Novo veículo</h1>
-      <p className="mt-1.5 max-w-2xl text-sm text-grafite-400">
-        O carro é salvo como rascunho. As fotos entram na próxima tela, e ele só vai pro site quando
-        você mandar publicar — assim ninguém vê o cadastro pela metade.
+      <p className="kicker m-0">Entrada no pátio</p>
+      <h1 className="titulo-pagina mt-2">O que entrou, quanto custou, por quanto sai.</h1>
+      <p className="mt-1 max-w-[52ch] text-[14px] text-muted">
+        O carro é salvo como rascunho. As fotos entram na tela seguinte, e ele só vai pro site
+        quando você mandar publicar — assim ninguém vê o cadastro pela metade.
       </p>
 
-      <div className="mt-6 max-w-4xl">
-        <FormularioVeiculo acao={criarVeiculoAcao} rotuloBotao="Salvar e adicionar fotos" />
+      <div className="mt-6">
+        <EntradaDeVeiculo acao={criarVeiculoAcao} />
       </div>
     </>
   )

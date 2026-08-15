@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { FormularioVeiculo } from '@/components/admin/FormularioVeiculo'
 import { EnviarFotos } from '@/components/admin/EnviarFotos'
-import { LancarCusto } from '@/components/admin/LancarCusto'
 import { urlFoto } from '@/lib/armazenamento'
 import { formatarReais, formatarReaisCurto, somar } from '@/lib/dinheiro'
 import { formatarData } from '@/lib/periodo'
@@ -10,10 +9,10 @@ import { buscarVeiculo } from '@/lib/veiculos'
 import { listarFotos } from '@/lib/fotos'
 import { listarCustos } from '@/lib/custos'
 import { buscarNegocioDoVeiculo } from '@/lib/negocios'
-import { ROTULO_CATEGORIA_CUSTO, ROTULO_ESTADO } from '@/lib/veiculos-tipos'
+import { ROTULO_ESTADO } from '@/lib/veiculos-tipos'
 import {
   salvarVeiculoAcao, enviarFotosAcao, removerFotoAcao, definirCapaAcao,
-  lancarCustoAcao, removerCustoAcao, mudarEstadoAcao, apagarVeiculoAcao,
+  mudarEstadoAcao, apagarVeiculoAcao,
 } from '../acoes'
 
 export const metadata = { title: 'Editar veículo' }
@@ -45,151 +44,120 @@ export default async function EditarVeiculo({
 
   return (
     <>
-      <nav className="mb-4 text-sm text-grafite-500">
-        <Link href="/admin/veiculos" className="transition hover:text-grafite-300">
-          Veículos
+      <nav className="mb-3 text-[13px] text-muted">
+        <Link href="/admin/veiculos" className="text-muted no-underline hover:text-accent">
+          Estoque
         </Link>
-        <span className="mx-2 text-grafite-700">/</span>
-        <span className="text-grafite-300">
+        <span className="mx-2">/</span>
+        <span>
           {veiculo.marca} {veiculo.modelo}
         </span>
       </nav>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-grafite-50">
-            {veiculo.marca} {veiculo.modelo}{' '}
-            <span className="numero font-normal text-grafite-500">{veiculo.anoModelo}</span>
+          <p className="kicker m-0">{veiculo.marca}</p>
+          <h1 className="titulo-pagina mt-1">
+            {veiculo.modelo} <span className="jj-num font-normal text-muted">{veiculo.anoModelo}</span>
           </h1>
-          <p className="mt-1 text-sm text-grafite-400">
+          <p className="m-0 text-[13px] text-muted">
             {ROTULO_ESTADO[veiculo.estado]} · entrou em {formatarData(veiculo.dataEntrada)}
           </p>
         </div>
 
-        {veiculo.estado === 'disponivel' || veiculo.estado === 'reservado' ? (
-          <Link
-            href={`/carros/${veiculo.slug}`}
-            target="_blank"
-            className="text-sm text-ambar-400 transition hover:text-ambar-300"
-          >
+        {(veiculo.estado === 'disponivel' || veiculo.estado === 'reservado') && (
+          <Link href={`/carros/${veiculo.slug}`} target="_blank" className="btn btn-ghost">
             Ver anúncio no site ↗
           </Link>
-        ) : null}
+        )}
       </div>
 
       {novo === '1' && (
-        <p className="mt-5 rounded-lg border border-ambar-500/30 bg-ambar-500/8 px-4 py-3 text-sm text-ambar-200">
+        <p className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-accent)] bg-[var(--color-accent-100)] px-3 py-2 text-[13px] text-accent-800">
           Cadastro criado. Agora adicione as fotos abaixo — depois é só publicar.
         </p>
       )}
 
-      {/* ── Situação e ações ─────────────────────────────────────────────── */}
-      <section className="mt-6 rounded-xl border border-grafite-800 bg-grafite-900 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="etiqueta">Situação</p>
-            <p className="mt-1 font-medium text-grafite-100">{ROTULO_ESTADO[veiculo.estado]}</p>
-          </div>
-
-          {vendido ? (
-            <div className="text-sm text-grafite-400">
-              Vendido em {formatarData(negocio?.data)} ·{' '}
-              <Link href="/admin/negocios" className="text-ambar-400 transition hover:text-ambar-300">
-                ver a venda
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {veiculo.estado !== 'disponivel' && (
-                <BotaoEstado id={veiculo.id} estado="disponivel" destaque={fotos.length > 0}>
-                  {veiculo.estado === 'rascunho' ? 'Publicar no site' : 'Voltar pro site'}
-                </BotaoEstado>
-              )}
-              {veiculo.estado === 'disponivel' && (
-                <BotaoEstado id={veiculo.id} estado="reservado">
-                  Marcar como reservado
-                </BotaoEstado>
-              )}
-              {veiculo.estado === 'reservado' && (
-                <BotaoEstado id={veiculo.id} estado="disponivel">
-                  Voltar pra disponível
-                </BotaoEstado>
-              )}
-              {veiculo.estado !== 'rascunho' && veiculo.estado !== 'arquivado' && (
-                <BotaoEstado id={veiculo.id} estado="arquivado">
-                  Tirar do site
-                </BotaoEstado>
-              )}
-              <Link
-                href={`/admin/negocios/novo?veiculo=${veiculo.id}`}
-                className="rounded-lg bg-conferido/15 px-4 py-2 text-sm font-medium text-conferido transition hover:bg-conferido/25"
-              >
-                Registrar venda
-              </Link>
-            </div>
-          )}
+      <section className="card mt-5 !flex-row flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="m-0 text-[10px] tracking-[0.1em] text-muted uppercase">Situação</p>
+          <p className="m-0 text-[15px]">{ROTULO_ESTADO[veiculo.estado]}</p>
         </div>
 
-        {veiculo.estado === 'rascunho' && fotos.length === 0 && (
-          <p className="mt-4 border-t border-grafite-800 pt-4 text-sm text-grafite-500">
-            Sem foto, o anúncio aparece como um retângulo cinza na listagem. Vale adicionar antes de
-            publicar.
+        {vendido ? (
+          <p className="m-0 text-[13px] text-muted">
+            Vendido em {formatarData(negocio?.data)} ·{' '}
+            <Link href="/admin/negocios" className="text-accent-700">
+              ver a venda
+            </Link>
           </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {veiculo.estado !== 'disponivel' && (
+              <BotaoEstado id={veiculo.id} estado="disponivel">
+                {veiculo.estado === 'rascunho' ? 'Publicar no site' : 'Voltar pro site'}
+              </BotaoEstado>
+            )}
+            {veiculo.estado === 'disponivel' && (
+              <BotaoEstado id={veiculo.id} estado="reservado">Marcar como reservado</BotaoEstado>
+            )}
+            {veiculo.estado === 'reservado' && (
+              <BotaoEstado id={veiculo.id} estado="disponivel">Voltar pra disponível</BotaoEstado>
+            )}
+            {veiculo.estado !== 'rascunho' && veiculo.estado !== 'arquivado' && (
+              <BotaoEstado id={veiculo.id} estado="arquivado">Tirar do site</BotaoEstado>
+            )}
+            <Link href={`/admin/negocios/novo?veiculo=${veiculo.id}`} className="btn btn-primary">
+              Registrar venda
+            </Link>
+          </div>
         )}
       </section>
 
+      {veiculo.estado === 'rascunho' && fotos.length === 0 && (
+        <p className="mt-3 text-[13px] text-muted">
+          Sem foto, o anúncio aparece como um retângulo vazio na listagem. Vale adicionar antes de
+          publicar.
+        </p>
+      )}
+
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_22rem]">
-        <div className="min-w-0 space-y-6">
-          {/* ── Fotos ────────────────────────────────────────────────────── */}
-          <section className="rounded-xl border border-grafite-800 bg-grafite-900 p-5">
-            <div className="mb-4 flex items-baseline justify-between">
-              <h2 className="font-display font-semibold text-grafite-50">Fotos</h2>
-              <span className="etiqueta">
+        <div className="min-w-0 flex flex-col gap-4">
+          <section className="card">
+            <div className="flex items-baseline justify-between">
+              <h2 className="card-title m-0">Fotos</h2>
+              <span className="kicker">
                 {fotos.length} {fotos.length === 1 ? 'foto' : 'fotos'}
               </span>
             </div>
 
             {fotos.length > 0 && (
-              <ul className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <ul className="grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3">
                 {fotos.map((f) => (
-                  <li
-                    key={f.id}
-                    className={`group relative overflow-hidden rounded-lg border ${
-                      f.capa ? 'border-ambar-500' : 'border-grafite-700'
-                    }`}
-                  >
-                    <div className="aspect-4/3 bg-grafite-800">
-                      <img
-                        src={urlFoto(f.chaveMiniatura ?? f.chave)!}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
+                  <li key={f.id}>
+                    <div
+                      className="plate aspect-4/3 !border-4"
+                      style={f.capa ? { outlineColor: 'var(--color-accent)', outlineWidth: '2px' } : undefined}
+                    >
+                      <img src={urlFoto(f.chaveMiniatura ?? f.chave)!} alt="" className="h-full w-full object-cover" />
                     </div>
-
-                    {f.capa && (
-                      <span className="absolute left-2 top-2 rounded bg-ambar-500 px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider text-grafite-950">
-                        Capa
-                      </span>
-                    )}
-
-                    <div className="flex items-center justify-between gap-1 border-t border-grafite-800 bg-grafite-950 px-2 py-1.5">
-                      {!f.capa ? (
+                    <div className="mt-1 flex items-center justify-between gap-1">
+                      {f.capa ? (
+                        <span className="text-[11px] text-accent-700">capa</span>
+                      ) : (
                         <form action={definirCapaAcao}>
                           <input type="hidden" name="fotoId" value={f.id} />
                           <input type="hidden" name="veiculoId" value={veiculo.id} />
-                          <button type="submit" className="text-xs text-grafite-400 transition hover:text-ambar-400">
-                            Usar como capa
+                          <button type="submit" className="btn btn-ghost !px-1 !text-[11px]">
+                            usar como capa
                           </button>
                         </form>
-                      ) : (
-                        <span className="text-xs text-grafite-600">principal</span>
                       )}
-
                       <form action={removerFotoAcao}>
                         <input type="hidden" name="fotoId" value={f.id} />
                         <input type="hidden" name="veiculoId" value={veiculo.id} />
-                        <button type="submit" className="text-xs text-grafite-500 transition hover:text-red-400">
-                          Apagar
+                        <button type="submit" className="btn btn-ghost !px-1 !text-[11px] !text-red-800">
+                          apagar
                         </button>
                       </form>
                     </div>
@@ -201,86 +169,68 @@ export default async function EditarVeiculo({
             <EnviarFotos veiculoId={veiculo.id} acao={enviarFotosAcao} />
           </section>
 
-          {/* ── Cadastro ─────────────────────────────────────────────────── */}
           <FormularioVeiculo acao={salvarVeiculoAcao} veiculo={veiculo} rotuloBotao="Salvar alterações" />
         </div>
 
-        {/* ── Coluna do dinheiro ────────────────────────────────────────── */}
-        <aside className="space-y-6">
-          <section className="rounded-xl border border-grafite-800 bg-grafite-900 p-5">
-            <h2 className="font-display font-semibold text-grafite-50">Quanto tem nele</h2>
-
-            <dl className="mt-4 space-y-2.5 text-sm">
+        <aside className="flex flex-col gap-4">
+          <section className="card">
+            <h2 className="card-title m-0">Quanto tem nele</h2>
+            <dl className="m-0 mt-2 flex flex-col gap-2 text-[13px]">
               {veiculo.origem === 'proprio' ? (
                 <Linha rotulo="Compra" valor={formatarReais(veiculo.valorCompraCentavos)} />
               ) : (
                 <Linha rotulo="Origem" valor="Consignado" />
               )}
-              <Linha rotulo="Custos" valor={formatarReais(totalCustos)} />
-              <div className="border-t border-grafite-800 pt-2.5">
-                <Linha rotulo="Investido" valor={formatarReais(investido)} forte />
-              </div>
+              <Linha rotulo="Despesas" valor={formatarReais(totalCustos)} />
+              <hr className="hr !my-1" />
+              <Linha rotulo="Investido" valor={formatarReais(investido)} forte />
               <Linha rotulo="Anunciado" valor={formatarReais(veiculo.precoCentavos)} />
 
               {veiculo.origem === 'proprio' && veiculo.precoCentavos > 0 && !vendido && (
-                <div className="border-t border-grafite-800 pt-2.5">
+                <>
+                  <hr className="hr !my-1" />
                   <Linha
                     rotulo="Se vender pelo anunciado"
                     valor={formatarReais(veiculo.precoCentavos - investido)}
-                    tom={veiculo.precoCentavos - investido >= 0 ? 'positivo' : 'negativo'}
+                    tom={veiculo.precoCentavos - investido >= 0 ? 'accent' : 'negativo'}
                   />
-                </div>
+                </>
               )}
 
               {negocio && (
-                <div className="border-t border-grafite-800 pt-2.5">
+                <>
+                  <hr className="hr !my-1" />
                   <Linha rotulo="Vendido por" valor={formatarReais(negocio.valorVendaCentavos)} />
                   <Linha
                     rotulo="Lucro"
                     valor={formatarReais(negocio.lucro)}
                     forte
-                    tom={negocio.lucro >= 0 ? 'positivo' : 'negativo'}
+                    tom={negocio.lucro >= 0 ? 'accent' : 'negativo'}
                   />
-                </div>
+                </>
               )}
             </dl>
+
+            <Link href={`/admin?veiculo=${veiculo.id}`} className="btn btn-secondary btn-block">
+              Abrir o extrato no livro
+            </Link>
           </section>
 
-          <section className="rounded-xl border border-grafite-800 bg-grafite-900 p-5">
-            <h2 className="font-display font-semibold text-grafite-50">Custos</h2>
-            <p className="mt-1 text-sm text-grafite-400">
-              Funilaria, mecânica, documentação — tudo que você põe no carro depois de pegar.
-            </p>
-
-            <div className="mt-4">
-              <LancarCusto veiculoId={veiculo.id} acao={lancarCustoAcao} />
-            </div>
-
-            {custos.length > 0 && (
-              <ul className="mt-4 divide-y divide-grafite-800 border-t border-grafite-800">
+          <section className="card">
+            <h2 className="card-title m-0">Lançamentos</h2>
+            {custos.length === 0 ? (
+              <p className="m-0 text-[13px] text-muted">
+                Nenhuma despesa lançada. Use o livro para adicionar.
+              </p>
+            ) : (
+              <ul className="m-0 list-none p-0 text-[13px]">
                 {custos.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                    <div className="min-w-0">
-                      <p className="text-grafite-200">{ROTULO_CATEGORIA_CUSTO[c.categoria]}</p>
-                      <p className="truncate text-xs text-grafite-500">
-                        {formatarData(c.data)}
-                        {c.descricao && ` · ${c.descricao}`}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="numero text-grafite-200">{formatarReaisCurto(c.valorCentavos)}</span>
-                      <form action={removerCustoAcao}>
-                        <input type="hidden" name="custoId" value={c.id} />
-                        <input type="hidden" name="veiculoId" value={veiculo.id} />
-                        <button
-                          type="submit"
-                          aria-label="Apagar custo"
-                          className="text-grafite-600 transition hover:text-red-400"
-                        >
-                          ×
-                        </button>
-                      </form>
-                    </div>
+                  <li key={c.id} className="flex justify-between gap-3 border-b border-[var(--color-divider)] py-2">
+                    <span className="min-w-0">
+                      {c.descricao || 'Despesa'}
+                      <span className="block text-[11px] text-muted">{formatarData(c.data)}</span>
+                    </span>
+                    <span className="jj-num">{formatarReaisCurto(c.valorCentavos)}</span>
                   </li>
                 ))}
               </ul>
@@ -288,18 +238,15 @@ export default async function EditarVeiculo({
           </section>
 
           {!vendido && (
-            <section className="rounded-xl border border-red-500/20 p-5">
-              <h2 className="font-display font-semibold text-grafite-300">Apagar</h2>
-              <p className="mt-1 text-sm text-grafite-500">
-                Some com o cadastro e as fotos. Não dá pra desfazer — se o carro já foi vendido, use
-                “tirar do site” em vez disso, pra não perder o histórico.
+            <section className="card !border-red-800/30">
+              <h2 className="card-title m-0 text-muted">Apagar</h2>
+              <p className="m-0 text-[12px] text-muted">
+                Some com o cadastro e as fotos, e não dá pra desfazer. Se o carro já foi vendido, use
+                “tirar do site” — assim o histórico fica.
               </p>
-              <form action={apagarVeiculoAcao} className="mt-3">
+              <form action={apagarVeiculoAcao}>
                 <input type="hidden" name="id" value={veiculo.id} />
-                <button
-                  type="submit"
-                  className="rounded-lg border border-red-500/40 px-4 py-2 text-sm text-red-300 transition hover:bg-red-500/10"
-                >
+                <button type="submit" className="btn btn-secondary !border-red-800/40 !text-red-800">
                   Apagar este veículo
                 </button>
               </form>
@@ -314,26 +261,17 @@ export default async function EditarVeiculo({
 function BotaoEstado({
   id,
   estado,
-  destaque,
   children,
 }: {
   id: number
   estado: string
-  destaque?: boolean
   children: React.ReactNode
 }) {
   return (
     <form action={mudarEstadoAcao}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="estado" value={estado} />
-      <button
-        type="submit"
-        className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-          destaque
-            ? 'bg-ambar-500 text-grafite-950 hover:bg-ambar-400'
-            : 'border border-grafite-700 text-grafite-200 hover:border-grafite-600'
-        }`}
-      >
+      <button type="submit" className="btn btn-secondary">
         {children}
       </button>
     </form>
@@ -349,13 +287,13 @@ function Linha({
   rotulo: string
   valor: string
   forte?: boolean
-  tom?: 'positivo' | 'negativo'
+  tom?: 'accent' | 'negativo'
 }) {
-  const cor = tom === 'positivo' ? 'text-conferido' : tom === 'negativo' ? 'text-red-400' : 'text-grafite-100'
+  const cor = tom === 'accent' ? 'text-accent-700' : tom === 'negativo' ? 'text-red-700' : ''
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-grafite-400">{rotulo}</dt>
-      <dd className={`numero ${forte ? 'font-semibold' : ''} ${cor}`}>{valor}</dd>
+      <dt className="text-muted">{rotulo}</dt>
+      <dd className={`jj-num m-0 ${forte ? 'font-semibold' : ''} ${cor}`}>{valor}</dd>
     </div>
   )
 }

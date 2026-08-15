@@ -135,7 +135,7 @@ export default async function PaginaAnuncio({ params }: { params: Promise<{ slug
           <aside className="flex flex-col gap-4 lg:sticky lg:top-[84px] lg:self-start">
             <div>
               <p className="kicker m-0">{anuncio.marca}</p>
-              <h1 className="mt-1 !text-[32px] !font-medium">
+              <h1 className="mt-1 titulo-pagina !font-medium">
                 {anuncio.modelo}
                 {anuncio.versao && <span className="font-normal"> {anuncio.versao}</span>}
               </h1>

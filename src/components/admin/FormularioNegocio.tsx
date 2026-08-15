@@ -38,9 +38,9 @@ export function FormularioNegocio({
 
   if (veiculos.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-grafite-700 px-6 py-16 text-center">
-        <p className="text-grafite-200">Nenhum carro disponível para vender.</p>
-        <p className="mt-1.5 text-sm text-grafite-500">
+      <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-divider)] px-6 py-12 text-center">
+        <p className="text-text">Nenhum carro disponível para vender.</p>
+        <p className="mt-1.5 text-sm text-muted">
           Cadastre um veículo primeiro — ou, se já vendeu todos, parabéns.
         </p>
       </div>
@@ -70,11 +70,11 @@ export function FormularioNegocio({
           </Campo>
 
           <Campo rotulo="Vendido por">
-            <input name="valorVenda" inputMode="decimal" required className={`${ENTRADA} numero`} placeholder="62.000,00" />
+            <input name="valorVenda" inputMode="decimal" required className={`${ENTRADA} jj-num`} placeholder="62.000,00" />
           </Campo>
 
           <Campo rotulo="Data da venda">
-            <input name="data" type="date" defaultValue={hoje()} className={`${ENTRADA} numero`} />
+            <input name="data" type="date" defaultValue={hoje()} className={`${ENTRADA} jj-num`} />
           </Campo>
 
           {/* A comissão só aparece em consignado. Num carro próprio, ela não
@@ -85,7 +85,7 @@ export function FormularioNegocio({
               className="sm:col-span-2"
               dica="Neste carro, o lucro é a comissão — o valor da venda é do dono do carro."
             >
-              <input name="comissaoRecebida" inputMode="decimal" className={`${ENTRADA} numero`} placeholder="3.000,00" />
+              <input name="comissaoRecebida" inputMode="decimal" className={`${ENTRADA} jj-num`} placeholder="3.000,00" />
             </Campo>
           )}
 
@@ -122,13 +122,13 @@ export function FormularioNegocio({
             name="houveTroca"
             checked={houveTroca}
             onChange={(e) => setHouveTroca(e.target.checked)}
-            className="h-4 w-4 accent-ambar-500"
+            className="h-4 w-4 accent-[var(--color-accent)]"
           />
-          <span className="text-grafite-200">Sim, entrou um carro</span>
+          <span className="text-text">Sim, entrou um carro</span>
         </label>
 
         {houveTroca && (
-          <div className="mt-5 grid gap-4 border-t border-grafite-800 pt-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-5 grid gap-4 border-t border-[var(--color-divider)] pt-5 sm:grid-cols-2 lg:grid-cols-3">
             <Campo rotulo="Marca">
               <input name="entradaMarca" required={houveTroca} className={ENTRADA} placeholder="Fiat" />
             </Campo>
@@ -140,13 +140,13 @@ export function FormularioNegocio({
             </Campo>
 
             <Campo rotulo="Ano de fabricação">
-              <input name="entradaAnoFabricacao" type="number" inputMode="numeric" className={`${ENTRADA} numero`} />
+              <input name="entradaAnoFabricacao" type="number" inputMode="numeric" className={`${ENTRADA} jj-num`} />
             </Campo>
             <Campo rotulo="Ano do modelo">
-              <input name="entradaAnoModelo" type="number" inputMode="numeric" className={`${ENTRADA} numero`} />
+              <input name="entradaAnoModelo" type="number" inputMode="numeric" className={`${ENTRADA} jj-num`} />
             </Campo>
             <Campo rotulo="Quilometragem">
-              <input name="entradaKm" type="number" inputMode="numeric" className={`${ENTRADA} numero`} />
+              <input name="entradaKm" type="number" inputMode="numeric" className={`${ENTRADA} jj-num`} />
             </Campo>
 
             <Campo rotulo="Câmbio">
@@ -176,7 +176,7 @@ export function FormularioNegocio({
               className="sm:col-span-2 lg:col-span-3"
               dica="Vira o custo de compra desse carro. É o que faz o lucro da próxima venda sair certo."
             >
-              <input name="entradaValor" inputMode="decimal" required={houveTroca} className={`${ENTRADA} numero`} placeholder="40.000,00" />
+              <input name="entradaValor" inputMode="decimal" required={houveTroca} className={`${ENTRADA} jj-num`} placeholder="40.000,00" />
             </Campo>
           </div>
         )}
@@ -187,20 +187,20 @@ export function FormularioNegocio({
       </Bloco>
 
       {estado.erro && (
-        <p role="alert" className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <p role="alert" className="rounded-lg px-4 py-3 text-sm text-red-800">
           {estado.erro}
         </p>
       )}
 
-      <div className="sticky bottom-0 -mx-5 border-t border-grafite-800 bg-grafite-950/95 px-5 py-3.5 backdrop-blur">
+      <div className="sticky bottom-0 -mx-5 border-t border-[var(--color-divider)] bg-bg px-5 py-3.5 backdrop-blur">
         <button
           type="submit"
           disabled={enviando}
-          className="rounded-lg bg-ambar-500 px-5 py-2.5 font-semibold text-grafite-950 transition hover:bg-ambar-400 disabled:opacity-60"
+          className="btn btn-primary"
         >
           {enviando ? 'Registrando…' : 'Registrar venda'}
         </button>
-        <p className="mt-2 text-xs text-grafite-500">
+        <p className="mt-2 text-xs text-muted">
           O carro sai do site automaticamente ao registrar.
         </p>
       </div>
