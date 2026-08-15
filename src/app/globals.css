@@ -1,146 +1,411 @@
 @import 'tailwindcss';
 
 /* ───────────────────────────────────────────────────────────────────────────
-   Identidade: "placar de autódromo".
+   Design system "Classical", portado do handoff de design.
 
-   Fundo escuro por decisão, não por moda. Três motivos:
-   1. Foto de carro brilha no escuro — o fundo some e o produto aparece.
-   2. Todo classificado de carro é branco e azul. Este não é.
-   3. "Selecionado" é a posição do Jair contra o anúncio solto de rede social,
-      e escuro com âmbar lê como seleção, não como feirão.
+   Substitui o tema grafite/âmbar anterior. A regra que organiza tudo:
+   **acento é traço, não preenchimento**. Botão primário é borda dourada sobre
+   transparente; card é bordado, não preenchido; sombra é sussurro. O dourado
+   aparece em pouca área e por isso continua valendo alguma coisa.
 
-   Número é sempre monoespaçado com largura fixa de dígito: preço, km, ano,
-   valor de lucro. Numa coluna de valores, dígito de largura variável faz a
-   vírgula dançar de linha em linha, e a tabela fica difícil de conferir.
+   Contraste: o par acento/fundo dá ~3:1, suficiente só para ícone e texto
+   grande. Todo texto pequeno em dourado usa `--color-accent-700`.
    ─────────────────────────────────────────────────────────────────────────── */
 
 @theme {
-  /* Grafite — a estrutura */
-  --color-grafite-50: #f7f7f8;
-  --color-grafite-100: #e8e9ec;
-  --color-grafite-200: #cbcdd4;
-  --color-grafite-300: #a0a4ae;
-  --color-grafite-400: #747986;
-  --color-grafite-500: #545967;
-  --color-grafite-600: #3d414d;
-  --color-grafite-700: #2c2f39;
-  --color-grafite-800: #1c1e26;
-  --color-grafite-900: #121319;
-  --color-grafite-950: #0b0c10;
+  --color-bg: #f3f2f2;
+  --color-surface: #eae9e9;
+  --color-text: #201f1d;
+  --color-accent: #b68235;
 
-  /* Âmbar — dinheiro e ação. Só aparece onde há preço ou botão. Espalhado,
-     deixa de sinalizar e vira decoração. */
-  --color-ambar-200: #ffdba8;
-  --color-ambar-300: #ffc071;
-  --color-ambar-400: #ffa53d;
-  --color-ambar-500: #f9840f;
-  --color-ambar-600: #e06806;
-  --color-ambar-700: #b84f08;
+  --color-neutral-100: #f8f4f4;
+  --color-neutral-200: #eae7e7;
+  --color-neutral-300: #d7d3d3;
+  --color-neutral-400: #bab6b6;
+  --color-neutral-500: #9b9797;
+  --color-neutral-600: #7d7979;
+  --color-neutral-700: #605d5d;
+  --color-neutral-800: #444141;
+  --color-neutral-900: #2d2b2b;
 
-  /* Verde: só selo de documentação em dia e botão de WhatsApp. */
-  --color-conferido: #4ade80;
-  --color-zap: #25d366;
-  --color-zap-escuro: #1da851;
+  --color-accent-100: #fff3e4;
+  --color-accent-200: #ffe3bf;
+  --color-accent-300: #facb8d;
+  --color-accent-400: #e1ad66;
+  --color-accent-500: #c28d41;
+  --color-accent-600: #a06f24;
+  --color-accent-700: #7d5411;
+  --color-accent-800: #5a3b0a;
+  --color-accent-900: #3a270d;
 
-  --font-display: var(--fonte-titulo), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--fonte-titulo), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--fonte-numero), ui-monospace, monospace;
+  /* Verde do WhatsApp: única cor fora do sistema, e só no botão de conversa. */
+  --color-zap: #1da851;
+
+  --font-sans: var(--fonte), system-ui, sans-serif;
+  --font-heading: var(--fonte), system-ui, sans-serif;
+
+  /* Escala do sistema, densidade 1.15×. Nada de px cru onde existe token. */
+  --spacing-1: 4.6px;
+  --spacing-2: 9.2px;
+  --spacing-3: 13.8px;
+  --spacing-4: 18.4px;
+  --spacing-6: 27.6px;
+  --spacing-8: 36.8px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 7px;
 }
 
-html {
-  scroll-behavior: smooth;
-  background: var(--color-grafite-950);
+:root {
+  --color-divider: color-mix(in srgb, #201f1d 16%, transparent);
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--color-grafite-950);
-  color: var(--color-grafite-100);
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
   font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  /* Prosa corrida mantém figuras normais; tabela e cifra ligam tabular. */
+  font-feature-settings: 'tnum' 0;
 }
 
-/* Grão sobre o fundo. Superfície escura chapada num celular OLED mostra faixas
-   de banda no degradê; o ruído quebra isso e dá textura de impressão. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23r)'/%3E%3C/svg%3E");
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  line-height: 1.12;
+  margin: 0 0 var(--spacing-2);
 }
 
-/* ── Utilitários de composição ───────────────────────────────────────────── */
-
-/* Etiqueta miúda em caixa alta: "CÂMBIO", "ANO", "LUCRO DO MÊS". É o que dá o
-   ar de ficha técnica. */
-.etiqueta {
-  font-size: 0.6875rem;
+h1 {
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+h2 {
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+h3 {
+  font-size: 25px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-grafite-400);
+  letter-spacing: -0.025em;
+}
+h4 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+h5 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
 }
 
-/* Número de ficha: largura de dígito fixa. */
-.numero {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum';
+p {
+  margin: 0 0 var(--spacing-3);
+  text-wrap: pretty;
 }
 
-/* Brilho âmbar difuso atrás do topo da página. */
-.brilho-ambar {
-  background:
-    radial-gradient(60rem 30rem at 50% -12rem, rgba(249, 132, 15, 0.16), transparent 70%),
-    radial-gradient(40rem 24rem at 88% -6rem, rgba(249, 132, 15, 0.07), transparent 65%);
+a {
+  color: var(--color-accent);
+  text-underline-offset: 3px;
 }
 
-/* Entrada escalonada da grade de carros. O atraso é aplicado por índice no
-   componente, então a página se monta de cima pra baixo em vez de piscar
-   inteira. */
-@keyframes surgir {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+img {
+  display: block;
+  max-width: 100%;
 }
 
-.surgir {
-  animation: surgir 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+:focus {
+  outline: none;
 }
-
-/* Quem pediu menos movimento no sistema não recebe nenhum. */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  .surgir {
-    animation: none;
-  }
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Foco visível de verdade. O anel padrão some no fundo escuro, e quem navega
-   por teclado fica sem saber onde está. */
 :focus-visible {
-  outline: 2px solid var(--color-ambar-400);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
-  border-radius: 2px;
+}
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
-/* A seta do input numérico convida ao clique errado — e o Jair cadastra carro
-   pelo celular, com o dedo. */
+@layer components {
+  .text-muted {
+    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+
+  /* Cifra, data, quilometragem, coluna de tabela. Largura de dígito fixa: sem
+     isso a vírgula dança de linha em linha e a coluna fica difícil de conferir. */
+  .jj-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  .kicker {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent-700);
+  }
+
+  .hr {
+    height: 1px;
+    border: 0;
+    margin: var(--spacing-4) 0;
+    background: var(--color-divider);
+  }
+
+  /* — botões — acento é traço, nunca preenchimento — */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--color-text);
+    background: transparent;
+    border: 1px solid transparent;
+    padding: var(--spacing-2) calc(var(--spacing-3) * 1.2);
+    border-radius: var(--radius-md);
+    /* A grotesca é mais larga que a serifada original e os rótulos quebravam. */
+    white-space: nowrap;
+  }
+  .btn svg {
+    display: block;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    color: var(--color-accent-700);
+    border-color: var(--color-accent);
+  }
+  .btn-primary:hover {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+  .btn-primary:active {
+    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+  .btn-secondary {
+    border-color: var(--color-divider);
+  }
+  .btn-secondary:hover {
+    background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  }
+  .btn-ghost {
+    color: var(--color-accent-700);
+    padding-inline: var(--spacing-1);
+  }
+  .btn-ghost:hover {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+  .btn-block {
+    width: 100%;
+    margin-top: var(--spacing-2);
+  }
+  /* Único botão preenchido do sistema, e de propósito: o verde do WhatsApp
+     não é o acento da marca, é o sinal de "conversa" que o comprador reconhece. */
+  .btn-zap {
+    background: var(--color-zap);
+    border-color: var(--color-zap);
+    color: #fff;
+  }
+  .btn-zap:hover {
+    background: color-mix(in srgb, var(--color-zap) 85%, #000);
+  }
+
+  /* — formulário — */
+  .field > label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  }
+  .input {
+    width: 100%;
+    min-height: 36px;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--color-text);
+    caret-color: var(--color-accent);
+    background: transparent;
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+  }
+  .input:hover {
+    border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  }
+  .input:focus-visible {
+    border-color: var(--color-accent);
+    outline-offset: 0;
+  }
+  textarea.input {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  /* — segmented — */
+  .seg {
+    display: inline-flex;
+    overflow: hidden;
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+  }
+  .seg-opt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    /* Alvo de toque: o handoff exige ≥44px no celular, e o Jair cadastra
+       carro em pé, na rua. */
+    min-height: 44px;
+  }
+  .seg-opt + .seg-opt {
+    border-left: 1px solid var(--color-divider);
+  }
+  .seg-opt:has(input:checked) {
+    color: var(--color-accent-700);
+    box-shadow: inset 0 0 0 1px var(--color-accent);
+  }
+  .seg-opt:not(:has(input:checked)):hover {
+    background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  }
+  .seg-opt:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+  .seg-opt input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* — cards — bordado, não preenchido — */
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3);
+    border-radius: var(--radius-md);
+    background: transparent;
+    border: 1px solid var(--color-divider);
+  }
+  .card-kicker {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent-700);
+  }
+  .card-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 17px;
+    line-height: 1.2;
+    letter-spacing: -0.012em;
+  }
+
+  /* — tags — */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    padding: 3px 10px;
+    border-radius: calc(var(--radius-md) * 0.75);
+  }
+  .tag-neutral {
+    background: var(--color-neutral-100);
+    color: var(--color-neutral-800);
+  }
+  .tag-outline {
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent-700);
+  }
+
+  /* — tabelas — */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+  .table th {
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-text) 60%, transparent);
+    padding: var(--spacing-2);
+    border-bottom: 1px solid var(--color-divider);
+  }
+  .table td {
+    padding: var(--spacing-2);
+    border-bottom: 1px solid var(--color-divider);
+    text-wrap: pretty;
+  }
+  .table tbody tr:hover {
+    background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  }
+
+  /* — moldura de foto — o "mat" das telas de desktop — */
+  .plate {
+    box-sizing: border-box;
+    border: 6px solid var(--color-surface);
+    outline: 1px solid var(--color-divider);
+    background: var(--color-neutral-200);
+    overflow: hidden;
+  }
+
+  .elev-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  .elev-lg {
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* Slider do simulador e do lucro alvo. */
+input[type='range'] {
+  accent-color: var(--color-accent);
+  width: 100%;
+}
+
+/* A seta do input numérico convida ao clique errado no celular. */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -150,20 +415,33 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-/* Barra de rolagem combinando com o resto. */
-@supports selector(::-webkit-scrollbar) {
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--color-grafite-900);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-grafite-600);
-    border-radius: 99px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-grafite-500);
+/* Tira de chips do mobile: rola na horizontal, sem barra visível. */
+.chips {
+  display: flex;
+  gap: var(--spacing-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+/* Única transição do sistema: a do card. Nada mais anima. */
+.card-link {
+  transition:
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+.card-link:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
   }
 }

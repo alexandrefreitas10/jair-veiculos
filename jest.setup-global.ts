@@ -11,12 +11,38 @@ export default async function globalSetup(): Promise<void> {
   }
 
   let host = '?'
+  let banco = '?'
   try {
-    host = new URL(url).hostname
+    const parsed = new URL(url)
+    host = parsed.hostname
+    banco = parsed.pathname.replace(/^\//, '')
   } catch {
     /* url malformada; o driver reclama depois com mensagem melhor que a minha */
   }
   const local = /^(localhost|127\.0\.0\.1|::1)$/.test(host)
+
+  // O nome do banco PRECISA terminar em _test.
+  //
+  // A trava de host remoto não bastava, e isso não é hipótese: em 15/08/2026 a
+  // suíte rodou contra o banco de desenvolvimento por semanas e apagou os dados
+  // de demonstração. A causa foi banal — os dois arquivos de ambiente estavam
+  // na ordem errada no `npm test`, e o `.env.local` sobrescrevia o
+  // `.env.test.local`. Como os dois bancos eram `localhost`, a checagem de host
+  // aprovou e ainda imprimiu "pode sujar à vontade".
+  //
+  // Host certo e banco errado é um engano silencioso. O sufixo torna a
+  // intenção explícita: um banco chamado `_test` foi criado para ser destruído.
+  if (local && !banco.endsWith('_test')) {
+    throw new Error(
+      `\n${'='.repeat(66)}\n` +
+        `  TESTES BLOQUEADOS: o banco "${banco}" não termina em _test\n\n` +
+        `  A suíte apaga veículos, negócios e custos a cada teste. Se este for\n` +
+        `  o banco de desenvolvimento, você perde o que estiver nele.\n\n` +
+        `  Confira o .env.test.local e a ORDEM dos --env-file no "npm test":\n` +
+        `  o último arquivo é o que vale, então .env.test.local vem por último.\n` +
+        `${'='.repeat(66)}\n`,
+    )
+  }
 
   if (local) {
     // Cria o schema ANTES do primeiro teste. Vários testes começam limpando

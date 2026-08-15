@@ -1,168 +1,104 @@
-import Link from 'next/link'
+import { Suspense } from 'react'
 import { Cabecalho } from '@/components/Cabecalho'
 import { Rodape } from '@/components/Rodape'
 import { CardCarro } from '@/components/CardCarro'
-import { SITE } from '@/lib/config-site'
-import { listarDestaques, listarVitrine, totalNaVitrine } from '@/lib/vitrine'
+import { FiltrosVitrine } from '@/components/FiltrosVitrine'
+import { listarVitrine, type Filtros } from '@/lib/vitrine'
+import { CAMBIOS, CARROCERIAS, COMBUSTIVEIS } from '@/lib/veiculos-tipos'
+import type { Cambio, Carroceria, Combustivel } from '@/lib/veiculos-tipos'
 
-// Renderiza a cada requisição, sempre.
-//
-// Sem esta linha o Next pré-renderiza a home no build — ela não usa cookie,
-// cabeçalho nem parâmetro de URL, então ele conclui que é estática. O resultado
-// seria o estoque congelado no dia do deploy: o Jair publica um carro, atualiza
-// a página e não vê nada mudar, e um carro vendido continua anunciado até o
-// próximo deploy. O build indica isso na tabela de rotas com "○ Static", que é
-// fácil de ler como sinal de sucesso quando na verdade é o aviso.
+// Renderiza a cada requisição. Sem isto o Next pré-renderiza no build e o
+// estoque fica congelado no dia do deploy: o Jair publica um carro, atualiza a
+// página e não vê nada mudar.
 export const dynamic = 'force-dynamic'
 
-const FAIXAS = [
-  { rotulo: 'Até R$ 40 mil', parametro: 'precoMax=4000000' },
-  { rotulo: 'R$ 40 a 70 mil', parametro: 'precoMin=4000000&precoMax=7000000' },
-  { rotulo: 'Acima de R$ 70 mil', parametro: 'precoMin=7000000' },
-  { rotulo: 'Automáticos', parametro: 'cambio=automatico' },
-]
+type Parametros = Record<string, string | string[] | undefined>
 
-export default async function Home() {
-  const [destaques, todos, total] = await Promise.all([
-    listarDestaques(6),
-    listarVitrine({ limite: 12 }),
-    totalNaVitrine(),
-  ])
+/** Traduz a URL em filtros.
+ *
+ *  Tudo aqui é texto de fora e é tratado como suspeito: número que não é
+ *  número vira `undefined`, e valor fora da lista conhecida é descartado em vez
+ *  de ir parar numa consulta. */
+export function lerFiltros(p: Parametros): Filtros {
+  const texto = (chave: string): string | undefined => {
+    const v = p[chave]
+    const s = Array.isArray(v) ? v[0] : v
+    return s && s.trim() ? s.trim() : undefined
+  }
+  const numero = (chave: string): number | undefined => {
+    const s = texto(chave)
+    if (!s) return undefined
+    const n = Number(s)
+    return Number.isFinite(n) && n >= 0 ? n : undefined
+  }
+  const daLista = <T extends string>(chave: string, lista: readonly T[]): T | undefined => {
+    const v = texto(chave)
+    return v && (lista as readonly string[]).includes(v) ? (v as T) : undefined
+  }
 
-  // Tira da segunda seção o que já apareceu nos destaques. Com estoque de dez
-  // carros, sem isto quase todo cartão aparece duas vezes na mesma rolagem — e
-  // a página passa a impressão de ter menos variedade do que tem.
-  const idsEmDestaque = new Set(destaques.map((d) => d.id))
-  const recentes = todos.filter((c) => !idsEmDestaque.has(c.id))
+  const ORDENS = ['preco_asc', 'preco_desc', 'km_asc', 'ano_desc', 'recente'] as const
+
+  return {
+    busca: texto('busca'),
+    marca: texto('marca'),
+    precoMin: numero('precoMin'),
+    precoMax: numero('precoMax'),
+    anoMin: numero('anoMin'),
+    kmMax: numero('kmMax'),
+    cambio: daLista<Cambio>('cambio', CAMBIOS),
+    combustivel: daLista<Combustivel>('combustivel', COMBUSTIVEIS),
+    carroceria: daLista<Carroceria>('carroceria', CARROCERIAS),
+    ordem: daLista('ordem', ORDENS) ?? 'preco_asc',
+  }
+}
+
+export default async function Vitrine({ searchParams }: { searchParams: Promise<Parametros> }) {
+  const parametros = await searchParams
+  const filtros = lerFiltros(parametros)
+  const carros = await listarVitrine(filtros)
 
   return (
     <>
-      <Cabecalho />
+      <Cabecalho ativo="/carros" />
 
-      <main className="relative">
-        <section className="brilho-ambar border-b border-grafite-800">
-          <div className="mx-auto max-w-6xl px-5 py-16 sm:py-24">
-            <p className="etiqueta">
-              {SITE.cidade} · {SITE.estado}
-            </p>
-
-            <h1 className="mt-4 max-w-3xl font-display text-4xl font-black leading-[1.05] tracking-tight text-grafite-50 sm:text-6xl">
-              Carro usado escolhido
-              <br />
-              <span className="text-ambar-400">um por um.</span>
-            </h1>
-
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-grafite-300">
-              Procedência conferida, documentação em dia e conversa direta comigo — sem vendedor de
-              plantão, sem enrolação.
-            </p>
-
-            <form action="/carros" className="mt-8 flex max-w-lg gap-2">
-              <input
-                type="search"
-                name="busca"
-                placeholder="Marca ou modelo…"
-                aria-label="Buscar por marca ou modelo"
-                className="min-w-0 flex-1 rounded-xl border border-grafite-700 bg-grafite-900/80 px-4 py-3.5 text-grafite-100 placeholder:text-grafite-500 outline-none backdrop-blur transition focus:border-ambar-500"
-              />
-              <button
-                type="submit"
-                className="shrink-0 rounded-xl bg-ambar-500 px-6 py-3.5 font-semibold text-grafite-950 transition hover:bg-ambar-400"
-              >
-                Buscar
-              </button>
-            </form>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              {FAIXAS.map((f) => (
-                <Link
-                  key={f.rotulo}
-                  href={`/carros?${f.parametro}`}
-                  className="rounded-full border border-grafite-700 px-4 py-2 text-sm text-grafite-300 transition hover:border-ambar-500/60 hover:text-ambar-300"
-                >
-                  {f.rotulo}
-                </Link>
-              ))}
-            </div>
-
-            {total > 0 && (
-              <p className="numero mt-8 text-sm text-grafite-500">
-                {total} {total === 1 ? 'carro disponível' : 'carros disponíveis'} agora
-              </p>
-            )}
+      <main className="mx-auto max-w-[1180px] px-4 py-8">
+        {/* Cabeçalho editorial: título à esquerda com medida curta pra quebrar
+            em duas linhas, texto de apoio à direita alinhado pela base. */}
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="max-w-[30ch]">
+            <p className="kicker m-0">Estoque selecionado</p>
+            <h1 className="mt-2">Carros revisados, procedência conferida.</h1>
           </div>
-        </section>
+          <p className="m-0 max-w-[36ch] text-[14px] text-muted">
+            Cada veículo passa por checagem de itens, laudo cautelar e conferência de documentação
+            antes de entrar no pátio.
+          </p>
+        </div>
 
-        {destaques.length > 0 && (
-          <Secao titulo="Destaques" descricao="O que eu recomendo olhar primeiro.">
-            <Grade carros={destaques} />
-          </Secao>
-        )}
+        <hr className="hr" />
 
-        {/* Só aparece se sobrou algo além dos destaques. */}
-        {recentes.length > 0 && (
-          <Secao
-            titulo={destaques.length > 0 ? 'Também no estoque' : 'Estoque'}
-            descricao={destaques.length > 0 ? undefined : 'Todos os carros disponíveis no momento.'}
-            verTudo={total > destaques.length + recentes.length}
-          >
-            <Grade carros={recentes} />
-          </Secao>
-        )}
+        <Suspense fallback={<div className="h-[44px]" />}>
+          <FiltrosVitrine />
+        </Suspense>
 
-        {total === 0 && (
-          <section className="mx-auto max-w-6xl px-5 py-14">
-            <div className="rounded-xl border border-dashed border-grafite-700 px-6 py-16 text-center">
-              <p className="text-grafite-300">Nenhum carro publicado ainda.</p>
-              <p className="mt-1 text-sm text-grafite-500">Volte em breve — o estoque gira rápido.</p>
-            </div>
-          </section>
+        <p className="mt-4 mb-4 text-[12px] text-muted">
+          {carros.length === 1 ? '1 veículo disponível' : `${carros.length} veículos disponíveis`}
+        </p>
+
+        {carros.length > 0 ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(272px,1fr))] gap-4">
+            {carros.map((c) => (
+              <CardCarro key={c.id} carro={c} />
+            ))}
+          </div>
+        ) : (
+          <p className="py-8 text-center text-muted">
+            Nenhum veículo com esses filtros. Ajuste a busca ou fale com um consultor.
+          </p>
         )}
       </main>
 
       <Rodape />
     </>
-  )
-}
-
-function Secao({
-  titulo,
-  descricao,
-  verTudo,
-  children,
-}: {
-  titulo: string
-  descricao?: string
-  verTudo?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <section className="mx-auto max-w-6xl px-5 py-14">
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="font-display text-2xl font-bold tracking-tight text-grafite-50">{titulo}</h2>
-          {descricao && <p className="mt-1 text-sm text-grafite-400">{descricao}</p>}
-        </div>
-        {verTudo && (
-          <Link
-            href="/carros"
-            className="shrink-0 text-sm font-medium text-ambar-400 transition hover:text-ambar-300"
-          >
-            Ver todos →
-          </Link>
-        )}
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function Grade({ carros }: { carros: Awaited<ReturnType<typeof listarVitrine>> }) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {carros.map((c, i) => (
-        <CardCarro key={c.id} carro={c} indice={i} />
-      ))}
-    </div>
   )
 }

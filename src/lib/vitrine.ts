@@ -33,6 +33,10 @@ export type CarroVitrine = {
   cambio: Cambio
   combustivel: Combustivel
   cor: string
+  carroceria: Carroceria | null
+  /** Só o final da placa. A placa completa nunca sai numa resposta pública —
+   *  com ela dá pra consultar o histórico do veículo e o proprietário. */
+  finalPlaca: string | null
   precoCentavos: number
   estado: Extract<Estado, 'disponivel' | 'reservado'>
   /** Chave da foto de capa no armazenamento. A URL é montada na exibição. */
@@ -44,8 +48,6 @@ export type CarroVitrine = {
  *  ficha completa, os selos e as fotos. */
 export type Anuncio = CarroVitrine & {
   portas: number
-  carroceria: Carroceria | null
-  finalPlaca: string | null
   opcionais: string[]
   aceitaTroca: boolean
   descricao: string | null
@@ -73,7 +75,9 @@ export type Filtros = {
   kmMax?: number
   cambio?: Cambio
   combustivel?: Combustivel
-  ordem?: 'recente' | 'preco_asc' | 'preco_desc' | 'km_asc'
+  /** Filtro por tipo de carroceria — o segmentado da vitrine. */
+  carroceria?: Carroceria
+  ordem?: 'recente' | 'preco_asc' | 'preco_desc' | 'km_asc' | 'ano_desc'
   limite?: number
 }
 
@@ -102,6 +106,8 @@ function paraCarro(l: LinhaVitrine): CarroVitrine {
     cambio: l.cambio as Cambio,
     combustivel: l.combustivel as Combustivel,
     cor: l.cor as string,
+    carroceria: (l.carroceria as Carroceria) ?? null,
+    finalPlaca: (l.final_placa as string) ?? null,
     precoCentavos: l.preco_centavos as number,
     estado: l.estado as CarroVitrine['estado'],
     fotoCapa: (l.foto_capa as string) ?? null,
@@ -125,6 +131,7 @@ export async function listarVitrine(filtros: Filtros): Promise<CarroVitrine[]> {
   if (filtros.kmMax !== undefined) onde = sql`${onde} AND v.km <= ${filtros.kmMax}`
   if (filtros.cambio) onde = sql`${onde} AND v.cambio = ${filtros.cambio}`
   if (filtros.combustivel) onde = sql`${onde} AND v.combustivel = ${filtros.combustivel}`
+  if (filtros.carroceria) onde = sql`${onde} AND v.carroceria = ${filtros.carroceria}`
   if (filtros.busca) {
     const termo = `%${filtros.busca}%`
     onde = sql`${onde} AND (v.marca ILIKE ${termo} OR v.modelo ILIKE ${termo} OR v.versao ILIKE ${termo})`
@@ -139,14 +146,17 @@ export async function listarVitrine(filtros: Filtros): Promise<CarroVitrine[]> {
         ? sql`ORDER BY v.preco_centavos DESC`
         : filtros.ordem === 'km_asc'
           ? sql`ORDER BY v.km ASC`
-          : sql`ORDER BY v.criado_em DESC`
+          : filtros.ordem === 'ano_desc'
+            ? sql`ORDER BY v.ano_modelo DESC, v.km ASC`
+            : sql`ORDER BY v.criado_em DESC`
 
   const limite = filtros.limite ?? 60
 
   const linhas = await sql<LinhaVitrine[]>`
     SELECT
       v.id, v.slug, v.marca, v.modelo, v.versao, v.ano_fabricacao, v.ano_modelo,
-      v.km, v.cambio, v.combustivel, v.cor, v.preco_centavos, v.estado,
+      v.km, v.cambio, v.combustivel, v.cor, v.carroceria, v.final_placa,
+      v.preco_centavos, v.estado,
       ${CAPA}
     FROM veiculos v
     ${onde}
@@ -161,7 +171,8 @@ export async function listarDestaques(limite = 6): Promise<CarroVitrine[]> {
   const linhas = await sql<LinhaVitrine[]>`
     SELECT
       v.id, v.slug, v.marca, v.modelo, v.versao, v.ano_fabricacao, v.ano_modelo,
-      v.km, v.cambio, v.combustivel, v.cor, v.preco_centavos, v.estado,
+      v.km, v.cambio, v.combustivel, v.cor, v.carroceria, v.final_placa,
+      v.preco_centavos, v.estado,
       ${CAPA}
     FROM veiculos v
     WHERE v.estado = ANY(${ESTADOS_PUBLICOS}) AND v.destaque
@@ -176,8 +187,9 @@ export async function buscarAnuncio(slug: string): Promise<Anuncio | null> {
   const [l] = await sql<LinhaVitrine[]>`
     SELECT
       v.id, v.slug, v.marca, v.modelo, v.versao, v.ano_fabricacao, v.ano_modelo,
-      v.km, v.cambio, v.combustivel, v.cor, v.preco_centavos, v.estado,
-      v.portas, v.carroceria, v.final_placa, v.opcionais, v.aceita_troca, v.descricao,
+      v.km, v.cambio, v.combustivel, v.cor, v.carroceria, v.final_placa,
+      v.preco_centavos, v.estado,
+      v.portas, v.opcionais, v.aceita_troca, v.descricao,
       v.ipva_pago, v.licenciamento_ok, v.sem_multas, v.sem_debitos,
       v.laudo_cautelar_ok, v.unico_dono, v.chave_reserva, v.manual, v.revisoes_em_dia,
       ${CAPA}

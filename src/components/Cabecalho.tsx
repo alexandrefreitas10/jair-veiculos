@@ -1,31 +1,48 @@
 import Link from 'next/link'
-import { SITE, linkWhatsapp } from '@/lib/config-site'
+import { SITE } from '@/lib/config-site'
 
-export function Cabecalho() {
+// Nav do handoff: marca à esquerda, itens à direita, hairline embaixo, sticky.
+// O item ativo leva `aria-current="page"` — é o que o leitor de tela anuncia e
+// também o que pinta o dourado, então a marcação visual e a semântica não têm
+// como divergir.
+
+const ITENS = [
+  { href: '/carros', rotulo: 'Estoque' },
+  { href: '/financiamento', rotulo: 'Financiamento' },
+  { href: '/vender', rotulo: 'Vender meu carro' },
+  { href: '/contato', rotulo: 'Contato' },
+]
+
+export function Cabecalho({ ativo }: { ativo?: string }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-grafite-800 bg-grafite-950/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-        <Link href="/" className="group flex items-baseline gap-2">
-          <span className="font-display text-lg font-black tracking-tight text-grafite-50 transition group-hover:text-ambar-400">
-            {SITE.nome}
-          </span>
+    <header className="sticky top-0 z-40 border-b border-[var(--color-divider)] bg-bg/95 backdrop-blur">
+      <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-4 py-3">
+        <Link
+          href="/"
+          className="mr-auto font-heading text-[18px] font-semibold tracking-[-0.012em] text-text no-underline"
+        >
+          {SITE.nome.replace(' Veículos', '')} <span className="text-accent">Veículos</span>
         </Link>
 
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="flex items-center gap-4">
+          {ITENS.map((i) => (
+            <Link
+              key={i.href}
+              href={i.href}
+              aria-current={ativo === i.href ? 'page' : undefined}
+              className="hidden text-[14px] text-text no-underline hover:text-accent aria-[current=page]:text-accent sm:inline"
+            >
+              {i.rotulo}
+            </Link>
+          ))}
+          {/* No celular a nav inteira não cabe; sobra o essencial. */}
           <Link
             href="/carros"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-grafite-300 transition hover:bg-grafite-800 hover:text-grafite-50"
+            aria-current={ativo === '/carros' ? 'page' : undefined}
+            className="text-[14px] text-text no-underline hover:text-accent aria-[current=page]:text-accent sm:hidden"
           >
             Estoque
           </Link>
-          <a
-            href={linkWhatsapp(`Olá ${SITE.nome.split(' ')[0]}, vim pelo site e queria falar com você.`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg bg-zap px-3.5 py-2 text-sm font-semibold text-grafite-950 transition hover:bg-zap-escuro hover:text-white"
-          >
-            WhatsApp
-          </a>
         </nav>
       </div>
     </header>

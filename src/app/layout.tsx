@@ -1,47 +1,36 @@
 import type { Metadata, Viewport } from 'next'
-import { Archivo, IBM_Plex_Mono } from 'next/font/google'
+import { Instrument_Sans } from 'next/font/google'
 import './globals.css'
 import { SITE } from '@/lib/config-site'
 
-// Archivo: grotesca industrial, com peso Black para a marca. Escolhida no lugar
-// das suspeitas de sempre porque tem cara de placa e de ficha técnica.
-const fonteTitulo = Archivo({
+// Família única em todo o sistema, conforme o handoff. O design original do
+// Classical usava serifada; a tipografia foi sobrescrita para uma grotesca
+// neutra, e os pesos e o entreletras dos títulos vêm ajustados no globals.css.
+const fonte = Instrument_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  variable: '--fonte-titulo',
-  display: 'swap',
-})
-
-// Monoespaçada só para número: preço, km, ano, valores do financeiro. Numa
-// coluna de valores, dígito de largura variável faz a vírgula dançar.
-const fonteNumero = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--fonte-numero',
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--fonte',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
   title: {
-    default: `${SITE.nome} — Carros usados e seminovos selecionados`,
+    default: `${SITE.nome} — Carros revisados, procedência conferida`,
     template: `%s | ${SITE.nome}`,
   },
   description: SITE.descricao,
   metadataBase: new URL(SITE.url),
-  openGraph: {
-    type: 'website',
-    locale: 'pt_BR',
-    siteName: SITE.nome,
-  },
+  openGraph: { type: 'website', locale: 'pt_BR', siteName: SITE.nome },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#121319',
+  themeColor: '#f3f2f2',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${fonteTitulo.variable} ${fonteNumero.variable}`}>
+    <html lang="pt-BR" className={fonte.variable}>
       <body className="min-h-dvh">{children}</body>
     </html>
   )

@@ -1,181 +1,112 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useTransition } from 'react'
-import { CAMBIOS, COMBUSTIVEIS, ROTULO_CAMBIO, ROTULO_COMBUSTIVEL } from '@/lib/veiculos-tipos'
+import { useTransition } from 'react'
+import { Search } from 'lucide-react'
 
-// Os filtros vivem na URL, não em estado interno. Isso é o que permite ao Jair
-// mandar pelo WhatsApp um link já filtrado — "olha os automáticos até 50 mil" —
-// e permite ao cliente voltar, recarregar e favoritar sem perder a busca.
+// Filtros do handoff: busca, carroceria e ordenação. Vivem na URL, não em
+// estado interno — é o que permite ao Jair mandar um link já filtrado pelo
+// WhatsApp ("olha os SUV até 70 mil") e ao cliente voltar sem perder a busca.
 
-const CAMPOS_SELECT =
-  'w-full rounded-lg border border-grafite-700 bg-grafite-900 px-3 py-2.5 text-sm text-grafite-100 outline-none transition focus:border-ambar-500'
+// Só as carrocerias do segmentado do handoff. A lista curta é proposital: um
+// segmentado com oito opções vira um menu, e menu no celular não rola.
+const CARROCERIAS = [
+  { valor: '', rotulo: 'Todos' },
+  { valor: 'suv', rotulo: 'SUV' },
+  { valor: 'sedan', rotulo: 'Sedã' },
+  { valor: 'hatch', rotulo: 'Hatch' },
+  { valor: 'picape', rotulo: 'Picape' },
+]
 
-export function FiltrosVitrine({ marcas }: { marcas: string[] }) {
+const ORDENS = [
+  { valor: 'preco_asc', rotulo: 'Menor preço' },
+  { valor: 'km_asc', rotulo: 'Menor km' },
+  { valor: 'ano_desc', rotulo: 'Mais novo' },
+]
+
+export function FiltrosVitrine() {
   const router = useRouter()
   const parametros = useSearchParams()
-  const [aplicando, iniciarTransicao] = useTransition()
-  const [aberto, setAberto] = useState(false)
+  const [, iniciar] = useTransition()
 
   function alterar(campo: string, valor: string) {
     const novos = new URLSearchParams(parametros.toString())
     if (valor) novos.set(campo, valor)
     else novos.delete(campo)
-    iniciarTransicao(() => {
-      router.push(`/carros?${novos.toString()}`, { scroll: false })
-    })
+    const busca = novos.toString()
+    iniciar(() => router.push(busca ? `/carros?${busca}` : '/carros', { scroll: false }))
   }
 
-  const valor = (campo: string) => parametros.get(campo) ?? ''
-  const quantosAtivos = ['marca', 'cambio', 'combustivel', 'precoMax', 'anoMin', 'kmMax'].filter((c) =>
-    parametros.get(c),
-  ).length
+  const atual = (campo: string) => parametros.get(campo) ?? ''
 
   return (
-    <div className="rounded-xl border border-grafite-800 bg-grafite-900">
-      {/* No celular os filtros começam fechados: senão empurram os carros pra
-          baixo da dobra, e carro é o que a pessoa veio ver. */}
-      <button
-        type="button"
-        onClick={() => setAberto((v) => !v)}
-        aria-expanded={aberto}
-        className="flex w-full items-center justify-between px-4 py-3.5 text-left lg:hidden"
-      >
-        <span className="font-medium text-grafite-100">
-          Filtrar
-          {quantosAtivos > 0 && (
-            <span className="numero ml-2 rounded-md bg-ambar-500 px-1.5 py-0.5 text-xs font-semibold text-grafite-950">
-              {quantosAtivos}
-            </span>
-          )}
-        </span>
-        <svg
-          viewBox="0 0 24 24"
-          className={`h-5 w-5 fill-grafite-400 transition ${aberto ? 'rotate-180' : ''}`}
+    <div className="flex flex-wrap items-end gap-3">
+      <div className="relative">
+        <Search
           aria-hidden="true"
-        >
-          <path d="m12 15.4-6-6L7.4 8l4.6 4.6L16.6 8 18 9.4z" />
-        </svg>
-      </button>
+          size={15}
+          strokeWidth={1.5}
+          className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted"
+        />
+        <input
+          type="search"
+          className="input w-[240px] pl-8"
+          placeholder="ex. Corolla XEi"
+          aria-label="Buscar por marca ou modelo"
+          defaultValue={atual('busca')}
+          // Busca ao soltar a tecla Enter ou ao sair do campo: a cada tecla
+          // seriam consultas demais ao banco por uma palavra digitada.
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') alterar('busca', (e.target as HTMLInputElement).value)
+          }}
+          onBlur={(e) => alterar('busca', e.target.value)}
+        />
+      </div>
 
-      <div className={`${aberto ? 'block' : 'hidden'} p-4 pt-0 lg:block lg:pt-4`}>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Campo rotulo="Marca">
-            <select className={CAMPOS_SELECT} value={valor('marca')} onChange={(e) => alterar('marca', e.target.value)}>
-              <option value="">Todas</option>
-              {marcas.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </Campo>
+      <Segmentado
+        nome="carroceria"
+        opcoes={CARROCERIAS}
+        valor={atual('carroceria')}
+        aoMudar={(v) => alterar('carroceria', v)}
+      />
 
-          <Campo rotulo="Câmbio">
-            <select className={CAMPOS_SELECT} value={valor('cambio')} onChange={(e) => alterar('cambio', e.target.value)}>
-              <option value="">Qualquer</option>
-              {CAMBIOS.map((c) => (
-                <option key={c} value={c}>
-                  {ROTULO_CAMBIO[c]}
-                </option>
-              ))}
-            </select>
-          </Campo>
-
-          <Campo rotulo="Combustível">
-            <select
-              className={CAMPOS_SELECT}
-              value={valor('combustivel')}
-              onChange={(e) => alterar('combustivel', e.target.value)}
-            >
-              <option value="">Qualquer</option>
-              {COMBUSTIVEIS.map((c) => (
-                <option key={c} value={c}>
-                  {ROTULO_COMBUSTIVEL[c]}
-                </option>
-              ))}
-            </select>
-          </Campo>
-
-          <Campo rotulo="Preço até">
-            <select
-              className={CAMPOS_SELECT}
-              value={valor('precoMax')}
-              onChange={(e) => alterar('precoMax', e.target.value)}
-            >
-              <option value="">Sem limite</option>
-              <option value="3000000">R$ 30.000</option>
-              <option value="5000000">R$ 50.000</option>
-              <option value="7000000">R$ 70.000</option>
-              <option value="10000000">R$ 100.000</option>
-              <option value="15000000">R$ 150.000</option>
-            </select>
-          </Campo>
-
-          <Campo rotulo="Ano a partir de">
-            <select className={CAMPOS_SELECT} value={valor('anoMin')} onChange={(e) => alterar('anoMin', e.target.value)}>
-              <option value="">Qualquer</option>
-              {anosRecentes().map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-          </Campo>
-
-          <Campo rotulo="Km até">
-            <select className={CAMPOS_SELECT} value={valor('kmMax')} onChange={(e) => alterar('kmMax', e.target.value)}>
-              <option value="">Sem limite</option>
-              <option value="30000">30.000 km</option>
-              <option value="60000">60.000 km</option>
-              <option value="100000">100.000 km</option>
-              <option value="150000">150.000 km</option>
-            </select>
-          </Campo>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-grafite-800 pt-4">
-          <div className="flex items-center gap-2">
-            <span className="etiqueta">Ordenar</span>
-            <select
-              className="rounded-lg border border-grafite-700 bg-grafite-900 px-2.5 py-1.5 text-sm text-grafite-100 outline-none focus:border-ambar-500"
-              value={valor('ordem')}
-              onChange={(e) => alterar('ordem', e.target.value)}
-            >
-              <option value="">Mais recentes</option>
-              <option value="preco_asc">Menor preço</option>
-              <option value="preco_desc">Maior preço</option>
-              <option value="km_asc">Menor km</option>
-            </select>
-          </div>
-
-          {quantosAtivos > 0 && (
-            <button
-              type="button"
-              onClick={() => iniciarTransicao(() => router.push('/carros', { scroll: false }))}
-              className="text-sm text-grafite-400 underline underline-offset-4 transition hover:text-ambar-400"
-            >
-              Limpar filtros
-            </button>
-          )}
-
-          {aplicando && <span className="etiqueta">buscando…</span>}
-        </div>
+      <div className="ml-auto">
+        <Segmentado
+          nome="ordem"
+          opcoes={ORDENS}
+          valor={atual('ordem') || 'preco_asc'}
+          aoMudar={(v) => alterar('ordem', v)}
+        />
       </div>
     </div>
   )
 }
 
-function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
+function Segmentado({
+  nome,
+  opcoes,
+  valor,
+  aoMudar,
+}: {
+  nome: string
+  opcoes: Array<{ valor: string; rotulo: string }>
+  valor: string
+  aoMudar: (v: string) => void
+}) {
   return (
-    <label className="block">
-      <span className="etiqueta mb-1.5 block">{rotulo}</span>
-      {children}
-    </label>
+    <div className="seg" role="group">
+      {opcoes.map((o) => (
+        <label key={o.valor || 'todos'} className="seg-opt">
+          <input
+            type="radio"
+            name={nome}
+            value={o.valor}
+            checked={valor === o.valor}
+            onChange={() => aoMudar(o.valor)}
+          />
+          {o.rotulo}
+        </label>
+      ))}
+    </div>
   )
-}
-
-function anosRecentes(): number[] {
-  const atual = new Date().getFullYear()
-  return Array.from({ length: 16 }, (_, i) => atual + 1 - i)
 }

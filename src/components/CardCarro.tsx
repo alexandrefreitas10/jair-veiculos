@@ -1,69 +1,75 @@
 import Link from 'next/link'
 import { urlFoto } from '@/lib/armazenamento'
 import { formatarKm, formatarReaisCurto } from '@/lib/dinheiro'
-import { ROTULO_CAMBIO, ROTULO_COMBUSTIVEL } from '@/lib/veiculos-tipos'
+import { SITE } from '@/lib/config-site'
+import { parcelaAPartirDe } from '@/lib/financiamento'
+import { ROTULO_CARROCERIA } from '@/lib/veiculos-tipos'
 import type { CarroVitrine } from '@/lib/vitrine'
 
-// Nota sobre <img> em vez de next/image: as fotos já saem do `sharp` em WebP,
-// em dois tamanhos, na hora do envio. Passar de novo pelo otimizador do Next
-// gastaria CPU do servidor pra refazer trabalho pronto — e, com o R2 servindo
-// de outro domínio, ainda exigiria liberar o domínio na configuração. Menos
-// peça, mesmo resultado.
+// Card do handoff. O cartão INTEIRO é o link; o botão "Ver detalhes" é
+// decoração com `pointer-events: none`. Botão dentro de link seria um alvo
+// aninhado — o navegador aceita, mas o leitor de tela anuncia dois destinos e
+// o toque no celular fica ambíguo.
 
-export function CardCarro({ carro, indice = 0 }: { carro: CarroVitrine; indice?: number }) {
+export function CardCarro({ carro }: { carro: CarroVitrine }) {
   const foto = urlFoto(carro.fotoCapaMiniatura ?? carro.fotoCapa)
   const titulo = `${carro.marca} ${carro.modelo}${carro.versao ? ` ${carro.versao}` : ''}`
+  const parcela = SITE.financiamento.ativo ? parcelaAPartirDe(carro.precoCentavos) : null
 
   return (
     <Link
       href={`/carros/${carro.slug}`}
-      className="surgir group flex flex-col overflow-hidden rounded-xl border border-grafite-800 bg-grafite-900 transition duration-300 hover:-translate-y-1 hover:border-ambar-500/50 hover:shadow-2xl hover:shadow-black/50"
-      // Escalona a entrada por posição: a página se monta de cima pra baixo
-      // em vez de piscar inteira de uma vez. Trava em 8 pra última linha de
-      // uma listagem longa não ficar esperando.
-      style={{ animationDelay: `${Math.min(indice, 8) * 55}ms` }}
+      className="card card-link overflow-hidden !p-0 text-text no-underline"
     >
-      <div className="relative aspect-4/3 overflow-hidden bg-grafite-800">
+      <div className="plate !border-0 aspect-4/3 border-b border-[var(--color-divider)]">
         {foto ? (
-          <img
-            src={foto}
-            alt={titulo}
-            loading={indice < 4 ? 'eager' : 'lazy'}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          />
+          <img src={foto} alt={titulo} loading="lazy" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <span className="etiqueta">sem foto</span>
+            <span className="text-[11px] text-muted">sem foto</span>
           </div>
-        )}
-
-        {carro.estado === 'reservado' && (
-          <span className="absolute left-3 top-3 rounded-md bg-grafite-950/90 px-2.5 py-1 text-[0.6875rem] font-bold uppercase tracking-widest text-ambar-300 backdrop-blur">
-            Reservado
-          </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="font-display font-semibold leading-snug text-grafite-50">
-          {carro.marca} {carro.modelo}
-        </h3>
-        {carro.versao && <p className="mt-0.5 truncate text-sm text-grafite-400">{carro.versao}</p>}
+      <div className="flex flex-col gap-2 p-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="card-kicker">{carro.marca}</span>
+          {carro.finalPlaca && (
+            <span className="jj-num text-[11px] text-muted">final {carro.finalPlaca}</span>
+          )}
+        </div>
 
-        <p className="numero mt-3 text-xl font-semibold text-ambar-400">
-          {formatarReaisCurto(carro.precoCentavos)}
+        <h3 className="card-title !text-[19px]">
+          {carro.modelo}
+          {carro.versao && <span className="font-normal"> {carro.versao}</span>}
+        </h3>
+
+        <p className="jj-num m-0 text-[12px] text-muted">
+          {carro.anoFabricacao}/{carro.anoModelo} · {formatarKm(carro.km)}
+          {carro.carroceria && (
+            <span className="font-sans"> · {ROTULO_CARROCERIA[carro.carroceria]}</span>
+          )}
         </p>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-grafite-800 pt-3 text-xs text-grafite-400">
-          <span className="numero">
-            {carro.anoFabricacao}/{carro.anoModelo}
-          </span>
-          <span className="text-grafite-700">·</span>
-          <span className="numero">{formatarKm(carro.km)}</span>
-          <span className="text-grafite-700">·</span>
-          <span>{ROTULO_CAMBIO[carro.cambio]}</span>
-          <span className="text-grafite-700">·</span>
-          <span>{ROTULO_COMBUSTIVEL[carro.combustivel]}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {carro.estado === 'reservado' && <span className="tag tag-outline">Reservado</span>}
+          <span className="tag tag-neutral">{carro.cor}</span>
+        </div>
+
+        <hr className="hr !my-1" />
+
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="jj-num m-0 font-heading text-[26px] leading-none font-semibold tracking-[-0.02em]">
+              {formatarReaisCurto(carro.precoCentavos)}
+            </p>
+            {parcela !== null && parcela > 0 && (
+              <p className="jj-num m-0 mt-1 text-[11px] text-muted">
+                ou {formatarReaisCurto(parcela)}/mês
+              </p>
+            )}
+          </div>
+          <span className="btn btn-primary pointer-events-none">Ver detalhes</span>
         </div>
       </div>
     </Link>
