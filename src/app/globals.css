@@ -393,7 +393,19 @@ img {
     background: color-mix(in srgb, var(--color-text) 4%, transparent);
   }
 
-  /* — moldura de foto — o "mat" das telas de desktop — */
+  /* — moldura de foto — o "mat" das telas de desktop —
+
+     DESVIO PROPOSITAL DO HANDOFF: o CSS original traz
+     `filter: sepia(0.22) saturate(0.82) contrast(1.05)` aqui.
+
+     Sobre os retângulos cinzas do protótipo, o filtro dá um tom quente que
+     combina com o dourado. Sobre foto de carro de verdade, ele mente: branco
+     vira creme, prata vira bege, azul perde saturação. Cor é característica do
+     produto — o cliente dirige até o pátio esperando um branco e encontra
+     outro, e a conversa começa com ele se sentindo enganado.
+
+     Se um dia alguém comparar com o handoff e achar que faltou, faltou por
+     isto. */
   .plate {
     box-sizing: border-box;
     border: 6px solid var(--color-surface);
