@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { armazenamento, chaveSegura, urlFoto, redefinirArmazenamento } from '@/lib/armazenamento'
 
 afterAll(async () => {
-  await rm(resolve(process.cwd(), '.uploads/teste'), { recursive: true, force: true })
+  await rm(resolve(process.cwd(), process.env.ARMAZENAMENTO_LOCAL_RAIZ ?? '.uploads', 'teste'), { recursive: true, force: true })
 })
 
 describe('chaveSegura', () => {

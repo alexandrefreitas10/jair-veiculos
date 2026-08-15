@@ -4,6 +4,26 @@
 // sem nada avisando: dados de teste vazaram pro banco do cliente e cada rodada
 // levava 13 minutos por causa da distância até o servidor. Aqui ela nasce pronta.
 export default async function globalSetup(): Promise<void> {
+  // A pasta de arquivos precisa ser só dos testes.
+  //
+  // Mesmo engano do banco, um andar abaixo: a suíte grava fotos de verdade em
+  // disco e limpa a pasta no fim. Enquanto ela usou a mesma pasta do app, cada
+  // rodada apagava as fotos dos carros de desenvolvimento — e o sintoma
+  // aparecia longe da causa, com a vitrine abrindo sem imagem nenhuma e 404 no
+  // log do servidor.
+  const raiz = process.env.ARMAZENAMENTO_LOCAL_RAIZ ?? ''
+  if (!raiz.endsWith('-test')) {
+    throw new Error(
+      `\n${'='.repeat(66)}\n` +
+        `  TESTES BLOQUEADOS: ARMAZENAMENTO_LOCAL_RAIZ não termina em -test\n` +
+        `  valor atual: ${raiz || '(vazio)'}\n\n` +
+        `  A suíte grava e apaga arquivos nessa pasta. Apontada para a pasta\n` +
+        `  do app, ela apaga as fotos dos veículos de desenvolvimento.\n\n` +
+        `  Defina no .env.test.local:  ARMAZENAMENTO_LOCAL_RAIZ=.uploads-test\n` +
+        `${'='.repeat(66)}\n`,
+    )
+  }
+
   const url = process.env.DATABASE_URL
   if (!url) {
     console.log('\n[testes] sem DATABASE_URL — os testes de banco serão PULADOS\n')

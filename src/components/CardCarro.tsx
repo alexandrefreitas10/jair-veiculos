@@ -11,7 +11,7 @@ import type { CarroVitrine } from '@/lib/vitrine'
 // aninhado — o navegador aceita, mas o leitor de tela anuncia dois destinos e
 // o toque no celular fica ambíguo.
 
-export function CardCarro({ carro }: { carro: CarroVitrine }) {
+export function CardCarro({ carro, indice = 0 }: { carro: CarroVitrine; indice?: number }) {
   const foto = urlFoto(carro.fotoCapaMiniatura ?? carro.fotoCapa)
   const titulo = `${carro.marca} ${carro.modelo}${carro.versao ? ` ${carro.versao}` : ''}`
   const parcela = SITE.financiamento.ativo ? parcelaAPartirDe(carro.precoCentavos) : null
@@ -23,7 +23,16 @@ export function CardCarro({ carro }: { carro: CarroVitrine }) {
     >
       <div className="plate !border-0 aspect-4/3 border-b border-[var(--color-divider)]">
         {foto ? (
-          <img src={foto} alt={titulo} loading="lazy" className="h-full w-full object-cover" />
+          <img
+            src={foto}
+            alt={titulo}
+            // Os primeiros cards aparecem sem rolar: em `lazy` eles só começam
+            // a carregar depois que o navegador calcula o layout, atrasando
+            // justamente a imagem que decide se o cliente fica na página.
+            loading={indice < 4 ? 'eager' : 'lazy'}
+            fetchPriority={indice === 0 ? 'high' : undefined}
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center">
             <span className="text-[11px] text-muted">sem foto</span>

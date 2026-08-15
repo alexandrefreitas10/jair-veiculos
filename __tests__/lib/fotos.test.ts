@@ -30,7 +30,7 @@ async function carro() {
 }
 
 afterAll(async () => {
-  await rm(resolve(process.cwd(), '.uploads/veiculos'), { recursive: true, force: true })
+  await rm(resolve(process.cwd(), process.env.ARMAZENAMENTO_LOCAL_RAIZ ?? '.uploads', 'veiculos'), { recursive: true, force: true })
 })
 
 describe('processarFoto', () => {

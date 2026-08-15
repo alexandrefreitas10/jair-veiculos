@@ -10,13 +10,24 @@ import { armazenamento, chaveSegura } from '@/lib/armazenamento'
 // `/api/fotos/../../.env.local` entregaria as credenciais do banco pra quem
 // pedisse.
 
+// O 404 leva `no-store` de propósito.
+//
+// Sem isso o navegador guarda o "não encontrado" por heurística — ele faz isso
+// com respostas sem cabeçalho de cache. E aí a foto conserta no servidor e
+// continua quebrada na tela de quem viu o erro, às vezes por dias. O sintoma é
+// um anúncio sem imagem que "só acontece com um cliente", impossível de
+// reproduzir de outra máquina.
+//
+// Uma ausência é sempre temporária: ou o arquivo ainda vai subir, ou a chave
+// está errada e será corrigida. Nenhum dos dois casos merece cache.
+const NAO_ENCONTRADO = () =>
+  new Response('Não encontrado', { status: 404, headers: { 'Cache-Control': 'no-store' } })
+
 export async function GET(_pedido: Request, { params }: { params: Promise<{ chave: string[] }> }) {
   const { chave: partes } = await params
   const chave = partes.join('/')
 
-  if (!chaveSegura(chave)) {
-    return new Response('Não encontrado', { status: 404 })
-  }
+  if (!chaveSegura(chave)) return NAO_ENCONTRADO()
 
   try {
     const dados = await armazenamento().ler(chave)
@@ -28,6 +39,6 @@ export async function GET(_pedido: Request, { params }: { params: Promise<{ chav
       },
     })
   } catch {
-    return new Response('Não encontrado', { status: 404 })
+    return NAO_ENCONTRADO()
   }
 }

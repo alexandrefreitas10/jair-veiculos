@@ -45,6 +45,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   pages: { signIn: '/login' },
   session: { strategy: 'jwt' },
+
+  // Nome de cookie próprio, em vez do padrão `authjs.session-token`.
+  //
+  // Cookie não distingue porta: para o navegador, `localhost:3000` e
+  // `localhost:54539` são o MESMO site. Com o nome padrão, este app e qualquer
+  // outro projeto Next rodando na mesma máquina disputam a mesma chave — e
+  // como cada um assina com o seu próprio AUTH_SECRET, o último a gravar
+  // derruba a sessão do outro. O sintoma é cruel: você entra, navega, e de
+  // repente uma tela qualquer pede senha de novo, sem padrão aparente.
+  //
+  // Em produção cada app tem seu domínio e isso não aconteceria. É um problema
+  // de desenvolvimento — e é em desenvolvimento que ele custa a tarde de
+  // alguém procurando bug onde não tem.
+  cookies: {
+    sessionToken: {
+      name: 'jair-veiculos.sessao',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   callbacks: {
     jwt({ token, user }) {
       if (user) token.id = user.id

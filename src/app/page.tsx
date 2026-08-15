@@ -87,8 +87,8 @@ export default async function Vitrine({ searchParams }: { searchParams: Promise<
 
         {carros.length > 0 ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(272px,1fr))] gap-4">
-            {carros.map((c) => (
-              <CardCarro key={c.id} carro={c} />
+            {carros.map((c, i) => (
+              <CardCarro key={c.id} carro={c} indice={i} />
             ))}
           </div>
         ) : (

@@ -35,7 +35,13 @@ export function chaveSegura(chave: string): boolean {
 }
 
 // ── Driver local ────────────────────────────────────────────────────────────
-const RAIZ_LOCAL = resolve(process.cwd(), '.uploads')
+//
+// A pasta é configurável por ambiente porque a suíte de testes precisa da sua
+// própria. Antes ela usava esta mesma, gravava arquivos de verdade e apagava a
+// pasta no fim — levando junto as fotos dos carros de desenvolvimento. O banco
+// de teste já era separado; o disco não era, e o sintoma aparecia longe da
+// causa: a vitrine abria com todos os anúncios sem imagem e 404 no log.
+const RAIZ_LOCAL = resolve(process.cwd(), process.env.ARMAZENAMENTO_LOCAL_RAIZ ?? '.uploads')
 
 function caminhoLocal(chave: string): string {
   if (!chaveSegura(chave)) throw new Error(`Chave de arquivo inválida: ${chave}`)
