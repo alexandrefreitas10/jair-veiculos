@@ -61,9 +61,11 @@ Os testes preferem `.env.test.local` a `.env.local`, então o banco de teste é 
 
 ### O que vai morder se for esquecido
 
-**`ARMAZENAMENTO` precisa ser `r2` em produção.** No modo `local` as fotos vão pro disco do container, que é apagado a cada deploy — o site fica com os anúncios sem imagem e ninguém percebe até um cliente reclamar.
+**⚠️ O Postgres gratuito expira em 30 dias.** Depois há 14 dias de carência e o Render **apaga o banco** — com o estoque e o histórico financeiro dentro. O `render.yaml` está no plano `free` por decisão consciente; antes do prazo, trocar para `basic-256mb` (US$ 10,50/mês) ou exportar e migrar.
 
-Os planos já estão pagos no `render.yaml` (`starter` no web, `basic-256mb` no banco), de propósito: o free hiberna e o Postgres gratuito expira em 90 dias.
+**O plano free do web hiberna** após 15 min sem visita e leva ~1 minuto pra acordar. Num site de venda, é o comprador que clicou o link do WhatsApp encarando uma tela de carregamento. `plan: starter` (US$ 7/mês) resolve.
+
+**`ARMAZENAMENTO` precisa ser `r2` em produção.** No modo `local` as fotos vão pro disco do container, que é apagado a cada deploy — o site fica com os anúncios sem imagem e ninguém percebe até um cliente reclamar.
 
 ## O que fica configurável
 

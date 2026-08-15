@@ -2,11 +2,20 @@ services:
   - type: web
     name: jair-veiculos
     runtime: node
-    # Pago desde o começo, não free. Num site de venda a hibernação do plano
-    # gratuito é cara do jeito errado: o comprador clica o link que o Jair
-    # mandou no WhatsApp, espera ~30 segundos numa tela branca e desiste — e o
-    # Jair nunca fica sabendo que perdeu o contato.
-    plan: starter
+    # FREE, por decisão do Alexandre (15/08/2026), sabendo do que segue.
+    #
+    # O serviço hiberna após 15 minutos sem visita e leva ~1 MINUTO pra acordar.
+    # Num site de venda isso custa exatamente o cliente que o site existe pra
+    # atender: o comprador clica o link que o Jair mandou no WhatsApp, encara um
+    # minuto de tela de carregamento e desiste — e o Jair nunca fica sabendo que
+    # perdeu o contato.
+    #
+    # Há também um teto de 750 horas de instância por mês no workspace inteiro,
+    # compartilhado com os outros serviços free. Estourou, tudo suspende até o
+    # mês virar.
+    #
+    # Trocar para `plan: starter` (US$ 7/mês) resolve os dois. É uma linha.
+    plan: free
 
     # `npm ci` instala exatamente o que está no package-lock.json. Não trocar por
     # `npm install`: next-auth está em versão beta e uma resolução nova trocaria
@@ -60,10 +69,19 @@ services:
         sync: false
 
 databases:
-  # Basic, não free. O Postgres gratuito do Render expira em 90 dias e é
-  # APAGADO — já aconteceu no Run Coach. Aqui isso levaria junto o estoque e o
-  # histórico financeiro inteiro do Jair.
+  # FREE, por decisão do Alexandre (15/08/2026).
+  #
+  # ⚠️ PRAZO CURTO: o Postgres gratuito do Render EXPIRA 30 DIAS depois de
+  # criado. Depois disso há 14 dias de carência para migrar para um plano pago;
+  # passou, o Render APAGA o banco. Não é aviso teórico — leva junto o estoque
+  # e o histórico financeiro inteiro do Jair.
+  #
+  # Se este banco foi criado em 15/08/2026:
+  #   expira em ~14/09/2026, apagado em ~28/09/2026.
+  #
+  # Antes disso: trocar para `plan: basic-256mb` (US$ 10,50/mês) OU exportar os
+  # dados e migrar. Ponha um lembrete no celular hoje, não depois.
   - name: jair-veiculos-db
-    plan: basic-256mb
+    plan: free
     databaseName: jairveiculos
     user: jairveiculos

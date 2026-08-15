@@ -121,8 +121,14 @@ Você deve ter cinco coisas anotadas:
    - Se ele não aparecer, clique em *Configure account* e dê acesso ao
      repositório no GitHub.
 4. Dê um nome ao Blueprint (`jair-veiculos` serve) e confirme a branch `master`.
-5. O Render lê o `render.yaml` e mostra o que vai criar: um serviço web
-   (**Starter**) e um Postgres (**Basic 256MB**).
+5. O Render lê o `render.yaml` e mostra o que vai criar: um serviço web e um
+   Postgres, ambos no plano **Free** (custo US$ 0).
+
+   > ⚠️ **O Postgres gratuito expira 30 dias depois de criado**, com mais 14
+   > dias de carência antes de o Render apagar. Anote a data no celular agora.
+   > Antes do prazo: trocar `plan: free` por `plan: basic-256mb` no
+   > `render.yaml`, ou exportar os dados. O serviço web também hiberna após 15
+   > min parado e leva ~1 minuto pra acordar.
 6. Ele vai pedir os valores das variáveis marcadas como "sync: false". Preencha:
 
 | Variável | O que colocar |
