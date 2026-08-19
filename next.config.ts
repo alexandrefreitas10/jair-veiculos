@@ -20,6 +20,22 @@ const cabecalhosDeSeguranca = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+
+  experimental: {
+    serverActions: {
+      // O padrão do Next é 1 MB, e foto de celular tem de 3 a 8 MB. Com o
+      // padrão, o envio de foto morria ANTES de chegar no meu código: o
+      // framework recusava a requisição e o navegador mostrava a página de
+      // erro do servidor, sem chance de exibir a mensagem preparada.
+      //
+      // 6 MB e não mais: o navegador já reduz cada foto para ~1600px antes de
+      // enviar (ver EnviarFotos.tsx), e cada requisição carrega UMA foto. Esse
+      // teto é rede de segurança, não a via normal — o servidor no Render tem
+      // 512 MB de memória, e um limite generoso aqui vira porta para derrubar
+      // o site enviando arquivos grandes de propósito.
+      bodySizeLimit: '6mb',
+    },
+  },
   async headers() {
     return [{ source: '/:path*', headers: cabecalhosDeSeguranca }]
   },

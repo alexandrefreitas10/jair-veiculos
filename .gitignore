@@ -20,3 +20,6 @@ npm-debug.log*
 
 # fotos gravadas pela suite de testes
 /.uploads-test
+
+# credenciais de PRODUCAO — nunca versionar
+.env.producao
