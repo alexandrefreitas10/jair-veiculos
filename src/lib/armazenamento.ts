@@ -78,17 +78,54 @@ const armazenamentoLocal: Armazenamento = {
 }
 
 // ── Driver R2 ───────────────────────────────────────────────────────────────
+/**
+ * Lê uma variável de ambiente e remove espaço e quebra de linha das pontas.
+ *
+ * Não é preciosismo. Credencial é copiada da tela da Cloudflare e colada num
+ * campo do painel do Render, e nesse caminho entra uma quebra de linha ou um
+ * espaço com frequência. O SDK monta a assinatura como
+ * `Authorization: AWS4-HMAC-SHA256 Credential=<chave>/...`; um caractere de
+ * controle ali torna o cabeçalho ilegal e o Node recusa a requisição com
+ * "Invalid character in header content", que não diz nada sobre a causa.
+ *
+ * Aconteceu no primeiro envio real de fotos, em 19/08/2026.
+ */
+function variavelLimpa(nome: string): string | undefined {
+  const bruto = process.env[nome]
+  if (bruto === undefined) return undefined
+  const limpo = bruto.trim()
+  return limpo === '' ? undefined : limpo
+}
+
 function criarArmazenamentoR2(): Armazenamento {
-  const conta = process.env.R2_ACCOUNT_ID
-  const chaveAcesso = process.env.R2_ACCESS_KEY_ID
-  const segredo = process.env.R2_SECRET_ACCESS_KEY
-  const balde = process.env.R2_BUCKET
-  const urlBase = process.env.R2_URL_PUBLICA
+  const conta = variavelLimpa('R2_ACCOUNT_ID')
+  const chaveAcesso = variavelLimpa('R2_ACCESS_KEY_ID')
+  const segredo = variavelLimpa('R2_SECRET_ACCESS_KEY')
+  const balde = variavelLimpa('R2_BUCKET')
+  const urlBase = variavelLimpa('R2_URL_PUBLICA')
 
   if (!conta || !chaveAcesso || !segredo || !balde || !urlBase) {
     throw new Error(
       'ARMAZENAMENTO=r2 exige R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET e R2_URL_PUBLICA.',
     )
+  }
+
+  // Depois de limpar as pontas, sobra o caso de um caractere estranho NO MEIO
+  // do valor — colagem parcial, acento vindo de um PDF. Aqui o erro é apontado
+  // pelo nome da variável, em vez de virar um erro de cabeçalho HTTP três
+  // camadas abaixo.
+  for (const [nome, valor] of [
+    ['R2_ACCOUNT_ID', conta],
+    ['R2_ACCESS_KEY_ID', chaveAcesso],
+    ['R2_SECRET_ACCESS_KEY', segredo],
+    ['R2_BUCKET', balde],
+  ] as const) {
+    if (!/^[!-~]+$/.test(valor)) {
+      throw new Error(
+        `${nome} tem caractere inválido (espaço, quebra de linha ou acento). ` +
+          'Copie o valor de novo da Cloudflare, sem selecionar espaços em volta.',
+      )
+    }
   }
 
   // Import tardio: quem roda com ARMAZENAMENTO=local não carrega o SDK da AWS.

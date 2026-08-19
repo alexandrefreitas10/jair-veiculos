@@ -74,3 +74,48 @@ describe('driver r2', () => {
     expect(() => armazenamento()).toThrow(/R2_ACCOUNT_ID/)
   })
 })
+
+describe('credenciais do R2 com sujeira', () => {
+  const original = { ...process.env }
+
+  afterEach(() => {
+    process.env = { ...original }
+    redefinirArmazenamento()
+  })
+
+  function configurar(extras: Record<string, string>) {
+    process.env.ARMAZENAMENTO = 'r2'
+    process.env.R2_ACCOUNT_ID = 'abc123'
+    process.env.R2_ACCESS_KEY_ID = 'chave123'
+    process.env.R2_SECRET_ACCESS_KEY = 'segredo123'
+    process.env.R2_BUCKET = 'balde'
+    process.env.R2_URL_PUBLICA = 'https://pub-x.r2.dev'
+    Object.assign(process.env, extras)
+    redefinirArmazenamento()
+  }
+
+  test('quebra de linha no fim da chave não derruba o envio', () => {
+    // Foi exatamente isto em produção: a chave colada no painel do Render veio
+    // com um \n, o SDK montou o cabeçalho Authorization com ele dentro, e o
+    // Node recusou com "Invalid character in header content" — erro que não
+    // diz nada sobre a causa.
+    configurar({ R2_ACCESS_KEY_ID: 'chave123\n' })
+    expect(() => armazenamento()).not.toThrow()
+  })
+
+  test('espaços em volta são removidos', () => {
+    configurar({ R2_SECRET_ACCESS_KEY: '  segredo123  ' })
+    expect(() => armazenamento()).not.toThrow()
+  })
+
+  test('variável só com espaço conta como ausente', () => {
+    configurar({ R2_BUCKET: '   ' })
+    expect(() => armazenamento()).toThrow(/R2_BUCKET/)
+  })
+
+  test('caractere estranho no MEIO do valor aponta a variável certa', () => {
+    // Trim não resolve este caso, e o erro precisa dizer onde olhar.
+    configurar({ R2_ACCESS_KEY_ID: 'chave 123' })
+    expect(() => armazenamento()).toThrow(/R2_ACCESS_KEY_ID/)
+  })
+})
