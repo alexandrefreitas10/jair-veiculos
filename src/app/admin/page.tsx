@@ -248,7 +248,19 @@ async function Drawer({
   if (!veiculo) return null
 
   return (
-    <aside className="elev-lg fixed inset-y-0 right-0 z-10 w-[min(440px,100%)] overflow-auto border-l border-[var(--color-divider)] bg-bg p-4">
+    <>
+      {/* Fundo escurecido: separa a gaveta do conteúdo e dá uma saída óbvia —
+          clicar fora fecha, que é o que todo mundo tenta primeiro. */}
+      <Link
+        href={voltar}
+        aria-label="Fechar extrato"
+        className="fixed inset-0 z-10 bg-[color-mix(in_srgb,var(--color-neutral-900)_35%,transparent)]"
+      />
+
+      {/* Começa ABAIXO do cabeçalho fixo, não no topo da janela. Com
+          `inset-y-0` a barra do painel cobria o nome do carro e o botão de
+          fechar — a gaveta abria já decapitada. */}
+      <aside className="elev-lg fixed right-0 bottom-0 z-20 w-[min(440px,100%)] overflow-auto border-l border-[var(--color-divider)] bg-bg p-4 top-[var(--altura-cabecalho)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="kicker m-0">{linha.marca}</p>
@@ -340,6 +352,7 @@ async function Drawer({
       <Link href={`/admin/veiculos/${veiculoId}`} className="btn btn-secondary btn-block">
         Abrir cadastro completo
       </Link>
-    </aside>
+      </aside>
+    </>
   )
 }

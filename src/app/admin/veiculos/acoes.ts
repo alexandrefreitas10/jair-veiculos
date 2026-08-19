@@ -6,6 +6,7 @@ import { exigirSessao } from '@/lib/sessao'
 import { paraCentavos } from '@/lib/dinheiro'
 import { atualizarVeiculo, criarVeiculo, apagarVeiculo, mudarEstado } from '@/lib/veiculos'
 import { adicionarFoto, definirCapa, removerFoto } from '@/lib/fotos'
+import { armazenamento } from '@/lib/armazenamento'
 import { lancarCusto, removerCusto } from '@/lib/custos'
 import { TAMANHO_MAXIMO_BYTES } from '@/lib/imagem'
 import {
@@ -216,6 +217,23 @@ export async function enviarFotosAcao(_anterior: unknown, formulario: FormData) 
   const arquivos = formulario.getAll('fotos').filter((a): a is File => a instanceof File && a.size > 0)
   if (arquivos.length === 0) return { erro: 'Escolha pelo menos uma foto.' }
 
+  // Confere o armazenamento ANTES de processar qualquer foto.
+  //
+  // Se ele está mal configurado, TODAS as fotos vão falhar pelo mesmo motivo —
+  // e repetir "não deu para processar" uma vez por arquivo esconde a causa
+  // atrás de uma parede de mensagens iguais. Aconteceu: seis fotos, seis
+  // linhas idênticas, e a causa real (faltavam as credenciais do R2) não
+  // aparecia em lugar nenhum.
+  //
+  // O texto do erro vai inteiro para a tela porque esta ação só roda atrás de
+  // login: quem lê é o dono do sistema, e para ele o nome da variável que
+  // falta é a informação mais útil que existe.
+  try {
+    armazenamento()
+  } catch (err) {
+    return { erro: `Armazenamento de fotos não configurado. ${(err as Error).message}` }
+  }
+
   const problemas: string[] = []
 
   for (const arquivo of arquivos) {
@@ -225,11 +243,13 @@ export async function enviarFotosAcao(_anterior: unknown, formulario: FormData) 
     }
     try {
       await adicionarFoto(id, Buffer.from(await arquivo.arrayBuffer()))
-    } catch {
+    } catch (err) {
       // Uma foto ruim no meio de dez não pode derrubar as outras nove: o Jair
       // seleciona tudo de uma vez na galeria do celular e às vezes pega um
-      // vídeo sem querer.
-      problemas.push(`${arquivo.name}: não deu para processar.`)
+      // vídeo sem querer. Mas o motivo vai junto — sem ele, o erro é uma
+      // parede lisa para quem precisa consertar.
+      console.error('[fotos] falhou:', arquivo.name, err)
+      problemas.push(`${arquivo.name}: ${(err as Error)?.message ?? 'não deu para processar'}`)
     }
   }
 
