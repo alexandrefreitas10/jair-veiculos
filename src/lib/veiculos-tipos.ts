@@ -117,6 +117,7 @@ export const OPCIONAIS = [
   'Sensor de estacionamento',
   'Piloto automático',
   'Bancos de couro',
+  'Teto solar',
   'Rodas de liga leve',
   'Faróis de LED',
   'Engate',
